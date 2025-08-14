@@ -1,0 +1,79 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "done": "Done"
+  },
+  "navigation": {
+    "home": "Home",
+    "statistics": "Statistics",
+    "profile": "Profile"
+  },
+  "home": {
+    "greeting": "Hello there! 👋",
+    "welcome": "Welcome to Spendy",
+    "quickStats": {
+      "thisMonth": "This Month",
+      "remaining": "Remaining"
+    },
+    "recentTransactions": "Recent Transactions",
+    "quickActions": "Quick Actions",
+    "addExpense": "Add Expense",
+    "viewReports": "View Reports"
+  },
+  "statistics": {
+    "title": "Spending Statistics",
+    "subtitle": "Track your financial habits",
+    "monthlyOverview": "Monthly Overview",
+    "totalSpent": "Total Spent",
+    "remaining": "Remaining",
+    "budget": "Budget",
+    "spendingByCategory": "Spending by Category",
+    "weeklyTrend": "Weekly Trend",
+    "categories": {
+      "foodDining": "Food & Dining",
+      "transportation": "Transportation",
+      "shopping": "Shopping"
+    },
+    "weekDays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "profile": {
+    "memberSince": "Member since {{date}}",
+    "accountOverview": "Account Overview",
+    "transactions": "Transactions",
+    "categories": "Categories",
+    "months": "Months",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "notificationsDesc": "Manage your alerts",
+    "privacySecurity": "Privacy & Security",
+    "privacySecurityDesc": "Account protection",
+    "appearance": "Appearance",
+    "appearanceDesc": "Theme and colors",
+    "language": "Language",
+    "languageDesc": "{{language}}",
+    "helpSupport": "Help & Support",
+    "helpSupportDesc": "Get assistance",
+    "rateApp": "Rate App",
+    "rateAppDesc": "Share your feedback",
+    "signOut": "Sign Out",
+    "appVersion": "Spendy v{{version}}",
+    "appCopyright": "© 2024 Spendy. All rights reserved."
+  },
+  "languages": {
+    "en": "English",
+    "pt": "Português"
+  }
+}

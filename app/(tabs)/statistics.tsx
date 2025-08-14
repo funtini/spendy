@@ -1,47 +1,49 @@
-import { Spacing } from "@/constants/Styles";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function StatisticsScreen() {
+  const { t } = useTranslation();
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Spending Statistics</Text>
-          <Text style={styles.subtitle}>Track your financial habits</Text>
+          <Text style={styles.title}>{t('statistics.title')}</Text>
+          <Text style={styles.subtitle}>{t('statistics.subtitle')}</Text>
         </View>
 
         {/* Monthly Overview */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Monthly Overview</Text>
+          <Text style={styles.sectionTitle}>{t('statistics.monthlyOverview')}</Text>
           <View style={styles.monthlyStats}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>$2,450</Text>
-              <Text style={styles.statLabel}>Total Spent</Text>
+              <Text style={styles.statLabel}>{t('statistics.totalSpent')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>$890</Text>
-              <Text style={styles.statLabel}>Remaining</Text>
+              <Text style={styles.statLabel}>{t('statistics.remaining')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>$3,340</Text>
-              <Text style={styles.statLabel}>Budget</Text>
+              <Text style={styles.statLabel}>{t('statistics.budget')}</Text>
             </View>
           </View>
         </View>
 
         {/* Spending by Category */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Spending by Category</Text>
+          <Text style={styles.sectionTitle}>{t('statistics.spendingByCategory')}</Text>
           <View style={styles.categoryItem}>
             <View style={styles.categoryIcon}>
               <Ionicons name="restaurant" size={20} color="#FF9500" />
             </View>
             <View style={styles.categoryInfo}>
-              <Text style={styles.categoryName}>Food & Dining</Text>
+              <Text style={styles.categoryName}>{t('statistics.categories.foodDining')}</Text>
               <Text style={styles.categoryAmount}>$650</Text>
             </View>
             <View style={styles.categoryBar}>
@@ -54,7 +56,7 @@ export default function StatisticsScreen() {
               <Ionicons name="car" size={20} color="#007AFF" />
             </View>
             <View style={styles.categoryInfo}>
-              <Text style={styles.categoryName}>Transportation</Text>
+              <Text style={styles.categoryName}>{t('statistics.categories.transportation')}</Text>
               <Text style={styles.categoryAmount}>$420</Text>
             </View>
             <View style={styles.categoryBar}>
@@ -67,7 +69,7 @@ export default function StatisticsScreen() {
               <Ionicons name="shirt" size={20} color="#AF52DE" />
             </View>
             <View style={styles.categoryInfo}>
-              <Text style={styles.categoryName}>Shopping</Text>
+              <Text style={styles.categoryName}>{t('statistics.categories.shopping')}</Text>
               <Text style={styles.categoryAmount}>$380</Text>
             </View>
             <View style={styles.categoryBar}>
@@ -78,40 +80,40 @@ export default function StatisticsScreen() {
 
         {/* Weekly Trend */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weekly Trend</Text>
+          <Text style={styles.sectionTitle}>{t('statistics.weeklyTrend')}</Text>
           <View style={styles.weeklyChart}>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Mon</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.mon')}</Text>
               <View style={[styles.chartBarFill, { height: '60%' }]} />
               <Text style={styles.chartValue}>$120</Text>
             </View>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Tue</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.tue')}</Text>
               <View style={[styles.chartBarFill, { height: '40%' }]} />
               <Text style={styles.chartValue}>$80</Text>
             </View>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Wed</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.wed')}</Text>
               <View style={[styles.chartBarFill, { height: '80%' }]} />
               <Text style={styles.chartValue}>$160</Text>
             </View>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Thu</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.thu')}</Text>
               <View style={[styles.chartBarFill, { height: '30%' }]} />
               <Text style={styles.chartValue}>$60</Text>
             </View>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Fri</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.fri')}</Text>
               <View style={[styles.chartBarFill, { height: '90%' }]} />
               <Text style={styles.chartValue}>$180</Text>
             </View>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Sat</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.sat')}</Text>
               <View style={[styles.chartBarFill, { height: '70%' }]} />
               <Text style={styles.chartValue}>$140</Text>
             </View>
             <View style={styles.chartBar}>
-              <Text style={styles.chartLabel}>Sun</Text>
+              <Text style={styles.chartLabel}>{t('statistics.weekDays.sun')}</Text>
               <View style={[styles.chartBarFill, { height: '50%' }]} />
               <Text style={styles.chartValue}>$100</Text>
             </View>
@@ -129,12 +131,12 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginBottom: Spacing.lg,
+    marginBottom: 20,
   },
   header: {
     backgroundColor: "#FFFFFF",
     padding: 20,
-    marginBottom: Spacing.lg,
+    marginBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5EA",
   },
@@ -150,7 +152,7 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: "#FFFFFF",
-    margin: Spacing.lg,
+    margin: 20,
     marginTop: 0,
     padding: 20,
     borderRadius: 12,

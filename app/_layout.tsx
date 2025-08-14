@@ -5,7 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import '../lib/i18n'; // Initialize i18n
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -19,13 +21,15 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack> 
-      <StatusBar style="auto" />
-      </SafeAreaView>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack> 
+          <StatusBar style="auto" />
+        </SafeAreaView>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

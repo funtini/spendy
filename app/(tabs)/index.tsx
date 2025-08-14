@@ -1,72 +1,75 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
+
   return (
-      <ScrollView style={styles.container}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Hello there! 👋</Text>
-          <Text style={styles.subtitle}>Welcome to Spendy</Text>
-        </View>
+    <ScrollView style={styles.container}>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <Text style={styles.greeting}>{t('home.greeting')}</Text>
+        <Text style={styles.subtitle}>{t('home.welcome')}</Text>
+      </View>
 
-        {/* Quick Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Ionicons name="wallet" size={24} color="#007AFF" />
-            <Text style={styles.statValue}>$2,450</Text>
-            <Text style={styles.statLabel}>This Month</Text>
+      {/* Quick Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Ionicons name="wallet" size={24} color="#007AFF" />
+          <Text style={styles.statValue}>$2,450</Text>
+          <Text style={styles.statLabel}>{t('home.quickStats.thisMonth')}</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <Ionicons name="trending-down" size={24} color="#FF3B30" />
+          <Text style={styles.statValue}>$890</Text>
+          <Text style={styles.statLabel}>{t('home.quickStats.remaining')}</Text>
+        </View>
+      </View>
+
+      {/* Recent Transactions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('home.recentTransactions')}</Text>
+        <View style={styles.transactionItem}>
+          <View style={styles.transactionIcon}>
+            <Ionicons name="restaurant" size={20} color="#FF9500" />
+          </View>
+          <View style={styles.transactionDetails}>
+            <Text style={styles.transactionName}>Coffee Shop</Text>
+            <Text style={styles.transactionDate}>Today, 9:30 AM</Text>
+          </View>
+          <Text style={styles.transactionAmount}>-$4.50</Text>
+        </View>
+        
+        <View style={styles.transactionItem}>
+          <View style={styles.transactionIcon}>
+            <Ionicons name="car" size={20} color="#007AFF" />
+          </View>
+          <View style={styles.transactionDetails}>
+            <Text style={styles.transactionName}>Gas Station</Text>
+            <Text style={styles.transactionDate}>Yesterday, 5:15 PM</Text>
+          </View>
+          <Text style={styles.transactionAmount}>-$45.00</Text>
+        </View>
+      </View>
+
+      {/* Quick Actions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
+        <View style={styles.actionButtons}>
+          <View style={styles.actionButton}>
+            <Ionicons name="add-circle" size={24} color="#007AFF" />
+            <Text style={styles.actionText}>{t('home.addExpense')}</Text>
           </View>
           
-          <View style={styles.statCard}>
-            <Ionicons name="trending-down" size={24} color="#FF3B30" />
-            <Text style={styles.statValue}>$890</Text>
-            <Text style={styles.statLabel}>Remaining</Text>
+          <View style={styles.actionButton}>
+            <Ionicons name="analytics" size={24} color="#34C759" />
+            <Text style={styles.actionText}>{t('home.viewReports')}</Text>
           </View>
         </View>
-
-        {/* Recent Transactions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <View style={styles.transactionItem}>
-            <View style={styles.transactionIcon}>
-              <Ionicons name="restaurant" size={20} color="#FF9500" />
-            </View>
-            <View style={styles.transactionDetails}>
-              <Text style={styles.transactionName}>Coffee Shop</Text>
-              <Text style={styles.transactionDate}>Today, 9:30 AM</Text>
-            </View>
-            <Text style={styles.transactionAmount}>-$4.50</Text>
-          </View>
-          
-          <View style={styles.transactionItem}>
-            <View style={styles.transactionIcon}>
-              <Ionicons name="car" size={20} color="#007AFF" />
-            </View>
-            <View style={styles.transactionDetails}>
-              <Text style={styles.transactionName}>Gas Station</Text>
-              <Text style={styles.transactionDate}>Yesterday, 5:15 PM</Text>
-            </View>
-            <Text style={styles.transactionAmount}>-$45.00</Text>
-          </View>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionButtons}>
-            <View style={styles.actionButton}>
-              <Ionicons name="add-circle" size={24} color="#007AFF" />
-              <Text style={styles.actionText}>Add Expense</Text>
-            </View>
-            
-            <View style={styles.actionButton}>
-              <Ionicons name="analytics" size={24} color="#34C759" />
-              <Text style={styles.actionText}>View Reports</Text>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
+      </View>
+    </ScrollView>
   );
 }
 

@@ -1,0 +1,79 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "done": "Concluído"
+  },
+  "navigation": {
+    "home": "Início",
+    "statistics": "Estatísticas",
+    "profile": "Perfil"
+  },
+  "home": {
+    "greeting": "Olá! 👋",
+    "welcome": "Bem-vindo ao Spendy",
+    "quickStats": {
+      "thisMonth": "Este Mês",
+      "remaining": "Restante"
+    },
+    "recentTransactions": "Transações Recentes",
+    "quickActions": "Ações Rápidas",
+    "addExpense": "Adicionar Despesa",
+    "viewReports": "Ver Relatórios"
+  },
+  "statistics": {
+    "title": "Estatísticas de Gastos",
+    "subtitle": "Acompanhe seus hábitos financeiros",
+    "monthlyOverview": "Visão Geral Mensal",
+    "totalSpent": "Total Gasto",
+    "remaining": "Restante",
+    "budget": "Orçamento",
+    "spendingByCategory": "Gastos por Categoria",
+    "weeklyTrend": "Tendência Semanal",
+    "categories": {
+      "foodDining": "Alimentação",
+      "transportation": "Transporte",
+      "shopping": "Compras"
+    },
+    "weekDays": {
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sáb",
+      "sun": "Dom"
+    }
+  },
+  "profile": {
+    "memberSince": "Membro desde {{date}}",
+    "accountOverview": "Visão Geral da Conta",
+    "transactions": "Transações",
+    "categories": "Categorias",
+    "months": "Meses",
+    "settings": "Configurações",
+    "notifications": "Notificações",
+    "notificationsDesc": "Gerencie seus alertas",
+    "privacySecurity": "Privacidade e Segurança",
+    "privacySecurityDesc": "Proteção da conta",
+    "appearance": "Aparência",
+    "appearanceDesc": "Tema e cores",
+    "language": "Idioma",
+    "languageDesc": "{{language}}",
+    "helpSupport": "Ajuda e Suporte",
+    "helpSupportDesc": "Obter assistência",
+    "rateApp": "Avaliar App",
+    "rateAppDesc": "Compartilhe seu feedback",
+    "signOut": "Sair",
+    "appVersion": "Spendy v{{version}}",
+    "appCopyright": "© 2024 Spendy. Todos os direitos reservados."
+  },
+  "languages": {
+    "en": "English",
+    "pt": "Português"
+  }
+}
