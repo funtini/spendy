@@ -16,14 +16,21 @@
   "home": {
     "greeting": "Hello there! 👋",
     "welcome": "Welcome to Spendy",
+    "selectAccount": "Select Account",
     "quickStats": {
       "thisMonth": "This Month",
-      "remaining": "Remaining"
+      "monthlyAverage": "Monthly Average"
     },
     "recentTransactions": "Recent Transactions",
     "quickActions": "Quick Actions",
     "addExpense": "Add Expense",
-    "viewReports": "View Reports"
+    "viewReports": "View Reports",
+    "viewAll": "View all"
+  },
+  "transactions": {
+    "title": "All Transactions",
+    "totalSpent": "Total Spent",
+    "transactions": "Transactions"
   },
   "statistics": {
     "title": "Spending Statistics",

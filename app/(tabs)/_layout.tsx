@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
 
 import { Colors } from "@/constants/Colors";
+import { AccountPicker, ProfileButton } from "@/features/home";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function TabLayout() {
@@ -19,12 +20,11 @@ export default function TabLayout() {
           backgroundColor: Colors[colorScheme ?? 'light'].card,
           borderTopWidth: 1,
           borderTopColor: Colors[colorScheme ?? 'light'].border,
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
+          paddingBottom: 1,
+          paddingTop: 3,
+          height: 50,
           ...Platform.select({
             ios: {
-              // Use a transparent background on iOS to show the blur effect
               position: 'absolute',
             },
             default: {},
@@ -32,6 +32,7 @@ export default function TabLayout() {
         },
         headerStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].card,
+          height: 100,
         },
         headerTitleStyle: {
           fontWeight: "600",
@@ -44,6 +45,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t('navigation.home'),
+          headerTitleAlign: 'left',
+          headerTitle: () => <AccountPicker />,
+          headerTitleContainerStyle: { paddingBottom: 6 },
+          headerRight: () => <ProfileButton />,
+          headerRightContainerStyle: { paddingBottom: 6, paddingRight: 5 },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),

@@ -8,7 +8,7 @@ export const QuickActions: React.FC = () => {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
+     
       <View style={styles.actionButtons}>
         <View style={styles.actionButton}>
           <Ionicons name="add-circle" size={24} color="#007AFF" />

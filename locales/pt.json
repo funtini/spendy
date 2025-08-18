@@ -16,14 +16,21 @@
   "home": {
     "greeting": "Olá! 👋",
     "welcome": "Bem-vindo ao Spendy",
+    "selectAccount": "Selecionar Conta",
     "quickStats": {
       "thisMonth": "Este Mês",
-      "remaining": "Restante"
+      "monthlyAverage": "Média Mensal"
     },
     "recentTransactions": "Transações Recentes",
     "quickActions": "Ações Rápidas",
     "addExpense": "Adicionar Despesa",
-    "viewReports": "Ver Relatórios"
+    "viewReports": "Ver Relatórios",
+    "viewAll": "Ver todas"
+  },
+  "transactions": {
+    "title": "Todas as Transações",
+    "totalSpent": "Total Gasto",
+    "transactions": "Transações"
   },
   "statistics": {
     "title": "Estatísticas de Gastos",

@@ -34,6 +34,16 @@ features/
     └── index.ts            # Shared exports
 ```
 
+## Screens
+
+### Tab Screens
+- **Home** (`app/(tabs)/index.tsx`) - Main dashboard with quick stats and recent transactions
+- **Statistics** (`app/(tabs)/statistics.tsx`) - Spending analytics and charts
+- **Profile** (`app/(tabs)/profile.tsx`) - User settings and account information
+
+### Modal Screens
+- **Transactions** (`app/transactions.tsx`) - Full transaction list with detailed view
+
 ## Benefits
 
 1. **Better Organization** - Each feature is self-contained
@@ -54,6 +64,18 @@ import { ProfileHeader, AccountStats } from '@/features/profile';
 
 // Import shared components
 import { LanguageSwitcher } from '@/features/shared';
+```
+
+### Navigation
+
+```tsx
+import { router } from 'expo-router';
+
+// Navigate to transactions screen
+router.push('/transactions');
+
+// Go back
+router.back();
 ```
 
 ### Adding New Features
@@ -100,7 +122,7 @@ import { NewComponent } from '@/features/new-feature';
 ### ✅ Home Feature
 - **HomeHeader** - Welcome header with greeting
 - **QuickStats** - Monthly spending statistics
-- **RecentTransactions** - Recent transaction list
+- **RecentTransactions** - Recent transaction list with "View all" button
 - **QuickActions** - Action buttons for common tasks
 
 ### ✅ Statistics Feature
@@ -118,3 +140,6 @@ import { NewComponent } from '@/features/new-feature';
 
 ### ✅ Shared Feature
 - **LanguageSwitcher** - Language switching component (compact and full size)
+
+### ✅ New Screens
+- **Transactions Screen** - Full transaction list with summary and detailed view

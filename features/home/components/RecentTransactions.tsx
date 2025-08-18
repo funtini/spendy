@@ -1,10 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const RecentTransactions: React.FC = () => {
   const { t } = useTranslation();
+  const router = useRouter();
+
+  const handleViewAll = () => {
+    router.push('/transactions');
+  };
 
   return (
     <View style={styles.section}>
@@ -30,6 +36,21 @@ export const RecentTransactions: React.FC = () => {
         </View>
         <Text style={styles.transactionAmount}>-$45.00</Text>
       </View>
+      <View style={styles.transactionItem}>
+        <View style={styles.transactionIcon}>
+          <Ionicons name="car" size={20} color="#007AFF" />
+        </View>
+        <View style={styles.transactionDetails}>
+          <Text style={styles.transactionName}>Gas Station</Text>
+          <Text style={styles.transactionDate}>Yesterday, 5:15 PM</Text>
+        </View>
+        <Text style={styles.transactionAmount}>-$45.00</Text>
+      </View>
+
+      {/* View All Button */}
+      <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAll}>
+        <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -86,5 +107,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FF3B30",
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 5,
+    paddingTop: 15,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#007AFF",
+    marginRight: 5,
   },
 });

@@ -1,5 +1,4 @@
 import {
-  HomeHeader,
   QuickActions,
   QuickStats,
   RecentTransactions
@@ -10,7 +9,6 @@ import { ScrollView, StyleSheet } from "react-native";
 export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
-      <HomeHeader />
       <QuickStats />
       <RecentTransactions />
       <QuickActions />
