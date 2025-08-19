@@ -1,3 +1,4 @@
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 export const QuickStats: React.FC = () => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
 
   // Mock data - in real app this would come from state/props
   const currentMonthSpending = 1250.00;
@@ -16,7 +18,7 @@ export const QuickStats: React.FC = () => {
   // Determine if current month is above or below average
   const isAboveAverage = currentMonthSpending > monthlyAverage;
   const trendIconName = isAboveAverage ? "trending-up" : "trending-down";
-  const trendIconColor = isAboveAverage ? "#FF3B30" : "#34C759";
+  const trendIconColor = isAboveAverage ? colors.error : colors.success;
   
   // Calculate the difference
   const difference = currentMonthSpending - monthlyAverage;
@@ -24,23 +26,42 @@ export const QuickStats: React.FC = () => {
 
   return (
     <View style={styles.statsContainer}>
-      <View style={[styles.statCard, styles.highlightedCard]}>
-        <View style={[styles.iconContainer, styles.highlightedIconContainer]}>
+      <View style={[styles.statCard, styles.highlightedCard, { 
+        backgroundColor: colors.card,
+        borderColor: colors.highlight,
+        shadowColor: colors.text,
+      }]}>
+        <View style={[styles.iconContainer, styles.highlightedIconContainer, { 
+          backgroundColor: colors.surfaceSecondary 
+        }]}>
           <Ionicons name={trendIconName as any} size={20} color={trendIconColor} />
         </View>
-        <Text style={[styles.statValue, styles.highlightedValue]}>${currentMonthSpending.toFixed(0)}</Text>
+        <Text style={[styles.statValue, styles.highlightedValue, { 
+          color: colors.text 
+        }]}>${currentMonthSpending.toFixed(0)}</Text>
         <View style={styles.labelContainer}>
-          <Text style={[styles.statLabel, styles.highlightedLabel]}>{currentMonth}</Text>
+          <Text style={[styles.statLabel, styles.highlightedLabel, { 
+            color: colors.textSecondary 
+          }]}>{currentMonth}</Text>
         </View>
       </View>
       
-      <View style={styles.statCard}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="analytics" size={20} color="#007AFF" />
+      <View style={[styles.statCard, { 
+        backgroundColor: colors.card,
+        shadowColor: colors.text,
+      }]}>
+        <View style={[styles.iconContainer, { 
+          backgroundColor: colors.surfaceSecondary 
+        }]}>
+          <Ionicons name="analytics" size={20} color={colors.primary} />
         </View>
-        <Text style={styles.statValue}>${monthlyAverage.toFixed(0)}</Text>
+        <Text style={[styles.statValue, { 
+          color: colors.text 
+        }]}>${monthlyAverage.toFixed(0)}</Text>
         <View style={styles.labelContainer}>
-          <Text style={styles.statLabel}>{t('home.quickStats.monthlyAverage')}</Text>
+          <Text style={[styles.statLabel, { 
+            color: colors.textSecondary 
+          }]}>{t('home.quickStats.monthlyAverage')}</Text>
         </View>
       </View>
     </View>
@@ -55,11 +76,9 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 12,
     alignItems: "center",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -68,7 +87,6 @@ const styles = StyleSheet.create({
   highlightedCard: {
     backgroundColor: "#FFFFFF",
     borderWidth: 2,
-    borderColor: "#778899",
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
@@ -77,13 +95,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F2F2F7",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
   },
   highlightedIconContainer: {
-    backgroundColor: "#F2F2F7",
+    // Inherits from iconContainer
   },
   iconContainerSmall: {
     width: 24,
@@ -97,11 +114,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#1C1C1E",
     marginBottom: 8,
   },
   highlightedValue: {
-    color: "#1C1C1E",
     fontSize: 26,
   },
   labelContainer: {
@@ -110,10 +125,8 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: "#8E8E93",
   },
   highlightedLabel: {
-    color: "#8E8E93",
     fontWeight: "600",
   },
 });

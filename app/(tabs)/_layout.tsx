@@ -3,23 +3,22 @@ import { Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
 
-import { Colors } from "@/constants/Colors";
 import { AccountPicker, ProfileButton } from "@/features/home";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { useThemeColors } from "@/hooks/useThemeColors";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  const colors = useThemeColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].card,
+          backgroundColor: colors.card,
           borderTopWidth: 1,
-          borderTopColor: Colors[colorScheme ?? 'light'].border,
+          borderTopColor: colors.border,
           paddingBottom: 1,
           paddingTop: 3,
           height: 50,
@@ -31,14 +30,14 @@ export default function TabLayout() {
           }),
         },
         headerStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].card,
+          backgroundColor: colors.card,
           height: 100,
         },
         headerTitleStyle: {
           fontWeight: "600",
-          color: Colors[colorScheme ?? 'light'].text,
+          color: colors.text,
         },
-        headerTintColor: Colors[colorScheme ?? 'light'].text,
+        headerTintColor: colors.text,
       }}
     >
       <Tabs.Screen
@@ -65,11 +64,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="settings"
         options={{
-          title: t('navigation.profile'),
+          title: t('navigation.settings'),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="settings" size={size} color={color} />
           ),
         }}
       />

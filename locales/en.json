@@ -11,6 +11,7 @@
   "navigation": {
     "home": "Home",
     "statistics": "Statistics",
+    "settings": "Settings",
     "profile": "Profile"
   },
   "home": {
@@ -31,6 +32,37 @@
     "title": "All Transactions",
     "totalSpent": "Total Spent",
     "transactions": "Transactions"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Customize your app experience",
+    "notifications": "Notifications",
+    "pushNotifications": "Push Notifications",
+    "pushNotificationsDesc": "Receive alerts on your device",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDesc": "Get updates via email",
+    "appearance": "Appearance",
+    "darkMode": "Dark Mode",
+    "darkModeDesc": "Switch between light and dark themes",
+    "accentColor": "Accent Color",
+    "accentColorDesc": "Choose your preferred color scheme",
+    "security": "Security",
+    "biometric": "Biometric Login",
+    "biometricDesc": "Use fingerprint or face ID",
+    "changePassword": "Change Password",
+    "changePasswordDesc": "Update your account password",
+    "dataSync": "Data & Sync",
+    "autoSync": "Auto Sync",
+    "autoSyncDesc": "Automatically sync your data",
+    "exportData": "Export Data",
+    "exportDataDesc": "Download your data as backup",
+    "language": "Language",
+    "about": "About",
+    "version": "App Version",
+    "help": "Help & Support",
+    "helpDesc": "Get assistance and tutorials",
+    "rateApp": "Rate App",
+    "rateAppDesc": "Share your feedback"
   },
   "statistics": {
     "title": "Spending Statistics",

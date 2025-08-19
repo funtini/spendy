@@ -11,6 +11,7 @@
   "navigation": {
     "home": "Início",
     "statistics": "Estatísticas",
+    "settings": "Configurações",
     "profile": "Perfil"
   },
   "home": {
@@ -31,6 +32,37 @@
     "title": "Todas as Transações",
     "totalSpent": "Total Gasto",
     "transactions": "Transações"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Personalize sua experiência no app",
+    "notifications": "Notificações",
+    "pushNotifications": "Notificações Push",
+    "pushNotificationsDesc": "Receba alertas no seu dispositivo",
+    "emailNotifications": "Notificações por Email",
+    "emailNotificationsDesc": "Receba atualizações por email",
+    "appearance": "Aparência",
+    "darkMode": "Modo Escuro",
+    "darkModeDesc": "Alternar entre temas claro e escuro",
+    "accentColor": "Cor de Destaque",
+    "accentColorDesc": "Escolha seu esquema de cores preferido",
+    "security": "Segurança",
+    "biometric": "Login Biométrico",
+    "biometricDesc": "Use impressão digital ou face ID",
+    "changePassword": "Alterar Senha",
+    "changePasswordDesc": "Atualize a senha da sua conta",
+    "dataSync": "Dados e Sincronização",
+    "autoSync": "Sincronização Automática",
+    "autoSyncDesc": "Sincronize seus dados automaticamente",
+    "exportData": "Exportar Dados",
+    "exportDataDesc": "Baixe seus dados como backup",
+    "language": "Idioma",
+    "about": "Sobre",
+    "version": "Versão do App",
+    "help": "Ajuda e Suporte",
+    "helpDesc": "Obtenha assistência e tutoriais",
+    "rateApp": "Avaliar App",
+    "rateAppDesc": "Compartilhe seu feedback"
   },
   "statistics": {
     "title": "Estatísticas de Gastos",

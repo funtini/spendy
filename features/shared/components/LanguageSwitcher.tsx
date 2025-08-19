@@ -1,6 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface LanguageSwitcherProps {
@@ -9,7 +8,6 @@ interface LanguageSwitcherProps {
 
 export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ compact = false }) => {
   const { currentLanguage, changeLanguage, availableLanguages } = useLanguage();
-  const { t } = useTranslation();
 
   const handleLanguageChange = async (languageCode: string) => {
     await changeLanguage(languageCode);
@@ -41,7 +39,6 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ compact = fa
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{t('profile.language')}</Text>
       <View style={styles.optionsContainer}>
         {availableLanguages.map((lang) => (
           <TouchableOpacity
@@ -67,7 +64,10 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ compact = fa
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    margin: 15,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     fontSize: 16,
