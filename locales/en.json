@@ -11,6 +11,7 @@
   "navigation": {
     "home": "Home",
     "statistics": "Statistics",
+    "wallet": "Wallet",
     "settings": "Settings",
     "profile": "Profile"
   },

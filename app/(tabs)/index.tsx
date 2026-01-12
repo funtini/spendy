@@ -1,5 +1,4 @@
 import {
-  QuickActions,
   QuickStats,
   RecentTransactions
 } from '@/features/home';
@@ -14,7 +13,6 @@ export default function HomeScreen() {
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <QuickStats />
       <RecentTransactions />
-      <QuickActions />
     </ScrollView>
   );
 }

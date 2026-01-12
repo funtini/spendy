@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
-  const { themeMode, isDark, setThemeMode } = useTheme();
+  const { isDark, setThemeMode } = useTheme();
   const colors = useThemeColors();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
