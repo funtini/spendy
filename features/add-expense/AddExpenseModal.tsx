@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ExpenseData {
   description: string;
@@ -31,6 +31,7 @@ interface AddExpenseModalProps {
 export default function AddExpenseModal({ visible, onClose }: AddExpenseModalProps) {
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [expenseData, setExpenseData] = useState<ExpenseData>({
     description: '',
     amount: '',
@@ -83,13 +84,15 @@ export default function AddExpenseModal({ visible, onClose }: AddExpenseModalPro
       visible={visible}
       animationType="slide"
       presentationStyle="fullScreen"
+      transparent={false}
       onRequestClose={handleClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         {/* Header */}
         <View style={[styles.header, { 
           backgroundColor: colors.card,
-          borderBottomColor: colors.separator 
+          borderBottomColor: colors.separator,
+          paddingTop: Math.max(insets.top, 12),
         }]}>
           <TouchableOpacity style={styles.backButton} onPress={handleClose}>
             <Ionicons name="close" size={24} color={colors.textSecondary} />
@@ -98,7 +101,11 @@ export default function AddExpenseModal({ visible, onClose }: AddExpenseModalPro
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
           <View style={styles.content}>
             {/* What did you spend on? */}
             <View style={styles.section}>
@@ -255,7 +262,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderBottomWidth: 1,
     minHeight: 60,
-    paddingTop: 20,
   },
   backButton: {
     padding: 8,
@@ -272,6 +278,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 120,
   },
   content: {
     padding: 20,

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
-import { AddExpenseBottomSheet } from "@/features/add-expense";
+import { AddExpenseModal } from "@/features/add-expense";
 import { AccountPicker, ProfileButton } from "@/features/home";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
@@ -106,8 +106,8 @@ export default function TabLayout() {
       {/* Add Expense Button Overlay */}
       <AddExpenseButton />
 
-      {/* Add Expense Bottom Sheet */}
-      <AddExpenseBottomSheet 
+      {/* Add Expense Modal (Full Screen) */}
+      <AddExpenseModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
       />
