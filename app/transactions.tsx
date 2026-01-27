@@ -3,11 +3,66 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+interface Transaction {
+  id: number;
+  name: string;
+  category: string;
+  amount: number;
+  date: Date;
+  icon: string;
+  color: string;
+}
+
+interface TransactionSection {
+  title: string;
+  data: Transaction[];
+}
+
+const getDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatSectionTitle = (date: Date, language: string) => {
+  const locale = language === 'pt' ? 'pt-PT' : 'en-US';
+
+  const weekdayLong = date.toLocaleDateString(locale, { weekday: 'long' });
+  const weekday =
+    language === 'pt'
+      ? weekdayLong.replace('-feira', '').trim()
+      : weekdayLong;
+
+  const day = date.toLocaleDateString(locale, { day: 'numeric' });
+  const monthRaw = date.toLocaleDateString(locale, { month: 'short' });
+  const month = monthRaw.replace('.', '').trim();
+
+  const title = `${weekday}, ${day} ${month}`;
+  return language === 'pt' ? title.toLowerCase() : title;
+};
+
+const daysAgo = (days: number, hour: number, minute: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  d.setHours(hour, minute, 0, 0);
+  return d;
+};
+
+const formatCurrency = (value: number, language: string) => {
+  const locale = language === 'pt' ? 'pt-PT' : 'en-US';
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
 export default function TransactionsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColors();
 
   const handleBack = () => {
@@ -15,13 +70,13 @@ export default function TransactionsScreen() {
   };
 
   // Mock transaction data
-  const transactions = [
+  const transactions: Transaction[] = [
     {
       id: 1,
       name: 'Coffee Shop',
       category: 'Food & Dining',
       amount: -4.50,
-      date: 'Today, 9:30 AM',
+      date: daysAgo(0, 9, 30),
       icon: 'restaurant',
       color: '#FF9500'
     },
@@ -30,7 +85,7 @@ export default function TransactionsScreen() {
       name: 'Gas Station',
       category: 'Transportation',
       amount: -45.00,
-      date: 'Yesterday, 5:15 PM',
+      date: daysAgo(1, 17, 15),
       icon: 'car',
       color: '#007AFF'
     },
@@ -39,7 +94,7 @@ export default function TransactionsScreen() {
       name: 'Grocery Store',
       category: 'Food & Dining',
       amount: -67.80,
-      date: 'Yesterday, 2:30 PM',
+      date: daysAgo(1, 14, 30),
       icon: 'basket',
       color: '#34C759'
     },
@@ -48,7 +103,7 @@ export default function TransactionsScreen() {
       name: 'Movie Theater',
       category: 'Entertainment',
       amount: -24.00,
-      date: '2 days ago',
+      date: daysAgo(2, 20, 0),
       icon: 'film',
       color: '#AF52DE'
     },
@@ -57,7 +112,7 @@ export default function TransactionsScreen() {
       name: 'Gas Station',
       category: 'Transportation',
       amount: -38.50,
-      date: '3 days ago',
+      date: daysAgo(3, 9, 45),
       icon: 'car',
       color: '#007AFF'
     },
@@ -66,7 +121,7 @@ export default function TransactionsScreen() {
       name: 'Restaurant',
       category: 'Food & Dining',
       amount: -89.90,
-      date: '3 days ago',
+      date: daysAgo(3, 13, 10),
       icon: 'restaurant',
       color: '#FF9500'
     },
@@ -75,7 +130,7 @@ export default function TransactionsScreen() {
       name: 'Shopping Mall',
       category: 'Shopping',
       amount: -156.75,
-      date: '4 days ago',
+      date: daysAgo(4, 16, 5),
       icon: 'shirt',
       color: '#FF3B30'
     },
@@ -84,11 +139,45 @@ export default function TransactionsScreen() {
       name: 'Pharmacy',
       category: 'Healthcare',
       amount: -23.45,
-      date: '5 days ago',
+      date: daysAgo(5, 11, 25),
       icon: 'medical',
       color: '#FF9500'
     }
   ];
+
+  const sections: TransactionSection[] = Object.values(
+    transactions
+      .slice()
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .reduce<Record<string, TransactionSection>>((acc, transaction) => {
+        const key = getDateKey(transaction.date);
+
+        if (!acc[key]) {
+          acc[key] = {
+            title: formatSectionTitle(transaction.date, i18n.language),
+            data: [],
+          };
+        }
+
+        acc[key].data.push(transaction);
+        return acc;
+      }, {})
+  );
+
+  const spent = transactions.reduce((sum, tx) => sum + (tx.amount < 0 ? Math.abs(tx.amount) : 0), 0);
+  const monthlyBudget = 500;
+  const spentRatio = monthlyBudget > 0 ? Math.min(spent / monthlyBudget, 1) : 0;
+  const isOverBudget = spent > monthlyBudget;
+  const remaining = monthlyBudget - spent;
+
+  const today = new Date();
+  const daysElapsed = Math.max(today.getDate(), 1);
+  const averagePerDay = spent / daysElapsed;
+
+  const budgetLabel = t('statistics.budget');
+  const spentLabel = t('transactions.totalSpent');
+  const remainingLabel = t('statistics.remaining');
+  const averageLabel = i18n.language === 'pt' ? 'Média/dia' : 'Avg/day';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -105,41 +194,88 @@ export default function TransactionsScreen() {
       </View>
 
       {/* Summary */}
-      <View style={[styles.summary, { 
-        backgroundColor: colors.card,
-        shadowColor: colors.text 
-      }]}>
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('transactions.totalSpent')}</Text>
-          <Text style={[styles.summaryAmount, { color: colors.error }]}>$449.90</Text>
+      <View style={[styles.summary, { backgroundColor: colors.card, shadowColor: colors.text }]}>
+        <View style={styles.summaryHeaderRow}>
+          <View>
+            <Text style={[styles.summaryTopLabel, { color: colors.textSecondary }]}>
+              {t('home.quickStats.thisMonth')}
+            </Text>
+            <Text style={[styles.summaryMainLabel, { color: colors.text }]}>{spentLabel}</Text>
+          </View>
+
+          <Text style={[styles.summaryMainValue, { color: colors.text }]}>
+            {formatCurrency(spent, i18n.language)}
+            <Text style={[styles.summaryMainValueMuted, { color: colors.textSecondary }]}>
+              {` / ${formatCurrency(monthlyBudget, i18n.language)}`}
+            </Text>
+          </Text>
         </View>
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('transactions.transactions')}</Text>
-          <Text style={[styles.summaryCount, { color: colors.primary }]}>8</Text>
+
+        <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSecondary }]}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${Math.round(spentRatio * 100)}%`,
+                backgroundColor: isOverBudget ? colors.error : colors.primary,
+              },
+            ]}
+          />
         </View>
+
+        <View style={styles.summaryMetaRow}>
+          <View style={styles.summaryMetaItem}>
+            <Text style={[styles.summaryMetaLabel, { color: colors.textSecondary }]}>{remainingLabel}</Text>
+            <Text style={[styles.summaryMetaValue, { color: isOverBudget ? colors.error : colors.success }]}>
+              {formatCurrency(remaining, i18n.language)}
+            </Text>
+          </View>
+
+          <View style={[styles.summaryMetaDivider, { backgroundColor: colors.separator, opacity: 0.6 }]} />
+
+          <View style={styles.summaryMetaItem}>
+            <Text style={[styles.summaryMetaLabel, { color: colors.textSecondary }]}>{averageLabel}</Text>
+            <Text style={[styles.summaryMetaValue, { color: colors.text }]}>
+              {formatCurrency(averagePerDay, i18n.language)}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={[styles.summaryFootnote, { color: colors.textTertiary }]}>
+          {budgetLabel}: {formatCurrency(monthlyBudget, i18n.language)}
+        </Text>
       </View>
 
-      {/* Transactions List */}
-      <ScrollView style={styles.transactionsList}>
-        {transactions.map((transaction) => (
-          <View key={transaction.id} style={[styles.transactionItem, { 
+      {/* Transactions List (Grouped by Date) */}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => String(item.id)}
+        style={styles.transactionsList}
+        contentContainerStyle={styles.transactionsContent}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section }) => (
+          <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+            {section.title}
+          </Text>
+        )}
+        renderItem={({ item }) => (
+          <View style={[styles.transactionItem, { 
             backgroundColor: colors.card,
             shadowColor: colors.text 
           }]}>
-            <View style={[styles.transactionIcon, { backgroundColor: transaction.color + '20' }]}>
-              <Ionicons name={transaction.icon as any} size={20} color={transaction.color} />
+            <View style={[styles.transactionIcon, { backgroundColor: item.color + '20' }]}>
+              <Ionicons name={item.icon as any} size={20} color={item.color} />
             </View>
             <View style={styles.transactionDetails}>
-              <Text style={[styles.transactionName, { color: colors.text }]}>{transaction.name}</Text>
-              <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>{transaction.category}</Text>
-              <Text style={[styles.transactionDate, { color: colors.textTertiary }]}>{transaction.date}</Text>
+              <Text style={[styles.transactionName, { color: colors.text }]}>{item.name}</Text>
+              <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>{item.category}</Text>
             </View>
-            <Text style={[styles.transactionAmount, { color: transaction.amount < 0 ? colors.error : colors.success }]}>
-              {transaction.amount < 0 ? '-' : '+'}${Math.abs(transaction.amount).toFixed(2)}
+            <Text style={[styles.transactionAmount, { color: item.amount < 0 ? colors.error : colors.success }]}>
+              {formatCurrency(item.amount, i18n.language)}
             </Text>
           </View>
-        ))}
-      </ScrollView>
+        )}
+      />
     </SafeAreaView>
   );
 }
@@ -167,9 +303,8 @@ const styles = StyleSheet.create({
     width: 34,
   },
   summary: {
-    flexDirection: 'row',
     margin: 20,
-    marginTop: 0,
+    marginTop: 16,
     padding: 20,
     borderRadius: 12,
     shadowOffset: { width: 0, height: 2 },
@@ -177,25 +312,81 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  summaryItem: {
-    flex: 1,
-    alignItems: 'center',
+  summaryTopLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 2,
   },
-  summaryLabel: {
+  summaryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 14,
+  },
+  summaryMainLabel: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  summaryMainValue: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  summaryMainValueMuted: {
     fontSize: 14,
-    marginBottom: 5,
+    fontWeight: '600',
   },
-  summaryAmount: {
-    fontSize: 24,
-    fontWeight: '700',
+  progressTrack: {
+    height: 10,
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginBottom: 14,
   },
-  summaryCount: {
-    fontSize: 24,
-    fontWeight: '700',
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  summaryMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 2,
+  },
+  summaryMetaItem: {
+    flex: 1,
+  },
+  summaryMetaDivider: {
+    width: 1,
+    height: 28,
+    marginHorizontal: 12,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+  },
+  summaryMetaLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+  summaryMetaValue: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  summaryFootnote: {
+    marginTop: 12,
+    fontSize: 12,
+    fontWeight: '500',
   },
   transactionsList: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  transactionsContent: {
+    paddingBottom: 20,
+  },
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 10,
+    marginBottom: 10,
   },
   transactionItem: {
     flexDirection: 'row',
