@@ -37,3 +37,11 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# IDE
+.idea/
