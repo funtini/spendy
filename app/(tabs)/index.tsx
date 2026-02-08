@@ -1,6 +1,7 @@
 import {
   QuickStats,
-  RecentTransactions
+  RecentTransactions,
+  UpcomingExpenses
 } from '@/features/home';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import React from 'react';
@@ -12,6 +13,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <QuickStats />
+      <UpcomingExpenses />
       <RecentTransactions />
     </ScrollView>
   );

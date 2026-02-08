@@ -23,6 +23,11 @@
       "thisMonth": "Este Mês",
       "monthlyAverage": "Média Mensal"
     },
+    "upcomingExpenses": {
+      "title": "Despesas Previstas",
+      "total": "Total próximo mês",
+      "dueDate": "Vencimento"
+    },
     "recentTransactions": "Transações Recentes",
     "quickActions": "Ações Rápidas",
     "addExpense": "Adicionar Despesa",

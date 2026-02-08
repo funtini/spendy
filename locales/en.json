@@ -23,6 +23,11 @@
       "thisMonth": "This Month",
       "monthlyAverage": "Monthly Average"
     },
+    "upcomingExpenses": {
+      "title": "Upcoming Expenses",
+      "total": "Total next month",
+      "dueDate": "Due"
+    },
     "recentTransactions": "Recent Transactions",
     "quickActions": "Quick Actions",
     "addExpense": "Add Expense",
