@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum TransactionType {
+  ONE_TIME
+  RECURRING
+}
+
+enum RecurringFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique @map("clerk_id")
+  email     String   @unique
+  name      String?
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accountMemberships AccountMember[]
+
+  @@map("users")
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  name      String
+  currency  String   @default("USD")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members      AccountMember[]
+  transactions Transaction[]
+  categories   Category[]
+  budgets      Budget[]
+  schedules    RecurringSchedule[]
+
+  @@map("accounts")
+}
+
+model AccountMember {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  accountId String      @map("account_id")
+  role      AccountRole @default(OWNER)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@map("account_members")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  accountId String   @map("account_id")
+  name      String
+  icon      String
+  color     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  account      Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+  schedules    RecurringSchedule[]
+
+  @@index([accountId])
+  @@map("categories")
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  accountId   String          @map("account_id")
+  categoryId  String          @map("category_id")
+  amount      Int             // cents, negative = expense, positive = income
+  description String
+  date        DateTime
+  type        TransactionType @default(ONE_TIME)
+  scheduleId  String?         @map("schedule_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  account  Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category Category           @relation(fields: [categoryId], references: [id])
+  schedule RecurringSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+
+  @@index([accountId, date])
+  @@map("transactions")
+}
+
+model RecurringSchedule {
+  id          String             @id @default(cuid())
+  accountId   String             @map("account_id")
+  categoryId  String             @map("category_id")
+  amount      Int                // cents, negative = expense
+  description String
+  frequency   RecurringFrequency
+  dayOfMonth  Int?               @map("day_of_month") // 1-31 for MONTHLY
+  dayOfWeek   Int?               @map("day_of_week")  // 0-6 for WEEKLY/BIWEEKLY
+  isActive    Boolean            @default(true) @map("is_active")
+  icon        String?
+  color       String?
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category     Category      @relation(fields: [categoryId], references: [id])
+  transactions Transaction[]
+
+  @@index([accountId, isActive])
+  @@map("recurring_schedules")
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  accountId  String   @map("account_id")
+  categoryId String?  @map("category_id") // null = total budget
+  amount     Int      // cents, positive
+  month      Int      // 1-12
+  year       Int
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  account  Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@unique([accountId, categoryId, month, year])
+  @@index([accountId])
+  @@map("budgets")
+}
