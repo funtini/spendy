@@ -2,15 +2,15 @@ import { Tabs } from 'expo-router';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AddExpenseBottomSheet, AddExpenseBottomSheetRef } from '@/features/add-expense';
+import { AddExpenseModal, AddExpenseModalRef } from '@/features/add-expense';
 import { CustomTabBar } from '@/features/shared';
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<AddExpenseBottomSheetRef>(null);
+  const modalRef = useRef<AddExpenseModalRef>(null);
 
   const handleAddPress = () => {
-    bottomSheetRef.current?.open();
+    modalRef.current?.open();
   };
 
   return (
@@ -41,7 +41,7 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      <AddExpenseBottomSheet ref={bottomSheetRef} />
+      <AddExpenseModal ref={modalRef} />
     </>
   );
 }
