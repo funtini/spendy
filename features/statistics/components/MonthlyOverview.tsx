@@ -2,24 +2,38 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useFontFamily } from '@/hooks/useFontFamily';
+
 export const MonthlyOverview: React.FC = () => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const ff = useFontFamily();
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t('statistics.monthlyOverview')}</Text>
-      <View style={styles.monthlyStats}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>$2,450</Text>
-          <Text style={styles.statLabel}>{t('statistics.totalSpent')}</Text>
+    <View style={styles.row}>
+      <View style={[styles.card, {
+        backgroundColor: colors.primaryCard,
+        borderColor: colors.primaryCardBorder,
+      }]}>
+        <Text style={[styles.label, { color: colors.textTertiary, fontFamily: ff.bodyMedium }]}>
+          TOTAL SPENT
+        </Text>
+        <Text style={[styles.value, { color: colors.text, fontFamily: ff.headingBold }]}>€1,450</Text>
+        <View style={[styles.badge, { backgroundColor: colors.error + '22' }]}>
+          <Text style={[styles.badgeText, { color: colors.error, fontFamily: ff.bodyBold }]}>▲ +8%</Text>
         </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>$890</Text>
-          <Text style={styles.statLabel}>{t('statistics.remaining')}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>$3,340</Text>
-          <Text style={styles.statLabel}>{t('statistics.budget')}</Text>
+      </View>
+      <View style={[styles.card, {
+        backgroundColor: colors.secondaryCard,
+        borderColor: colors.secondaryCardBorder,
+      }]}>
+        <Text style={[styles.label, { color: colors.textTertiary, fontFamily: ff.bodyMedium }]}>
+          AVG / DAY
+        </Text>
+        <Text style={[styles.value, { color: colors.text, fontFamily: ff.headingBold }]}>€60.4</Text>
+        <View style={[styles.badge, { backgroundColor: colors.secondary + '22' }]}>
+          <Text style={[styles.badgeText, { color: colors.secondary, fontFamily: ff.bodyBold }]}>▼ −5%</Text>
         </View>
       </View>
     </View>
@@ -27,43 +41,35 @@ export const MonthlyOverview: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  section: {
-    backgroundColor: "#FFFFFF",
-    margin: 20,
-    marginTop: 0,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  row: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    gap: 10,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1C1C1E",
-    marginBottom: 15,
-  },
-  monthlyStats: {
-    flexDirection: "row",
-    gap: 15,
-  },
-  statItem: {
+  card: {
     flex: 1,
-    alignItems: "center",
-    padding: 15,
-    backgroundColor: "#F2F2F7",
-    borderRadius: 12,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1.5,
   },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1C1C1E",
-    marginBottom: 5,
+  label: {
+    fontSize: 10,
+    letterSpacing: 0.7,
+    marginBottom: 6,
   },
-  statLabel: {
-    fontSize: 14,
-    color: "#8E8E93",
+  value: {
+    fontSize: 22,
+    letterSpacing: -0.5,
+    marginBottom: 7,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  badgeText: {
+    fontSize: 10,
   },
 });

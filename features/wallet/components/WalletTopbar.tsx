@@ -1,40 +1,31 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
 
-export const StatisticsHeader: React.FC = () => {
-  const { t } = useTranslation();
+export const WalletTopbar: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
 
   return (
-    <View style={[styles.header, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.text, fontFamily: ff.headingBold }]}>
-        Statistics{' '}
+        Wallet{' '}
         <Text style={{ color: colors.accent, fontStyle: 'italic' }}>✦</Text>
-      </Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary, fontFamily: ff.body }]}>
-        {t('statistics.subtitle')}
       </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 14,
+    paddingBottom: 12,
   },
   title: {
     fontSize: 26,
     letterSpacing: -0.5,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13,
   },
 });

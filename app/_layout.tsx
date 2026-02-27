@@ -1,20 +1,54 @@
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
+import {
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_600SemiBold,
+} from '@expo-google-fonts/jetbrains-mono';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_700Bold,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import {
+  Fraunces_600SemiBold,
+  Fraunces_700Bold,
+} from '@expo-google-fonts/fraunces';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
-import { useThemeColors } from '@/hooks/useThemeColors';
-import '../lib/i18n'; // Initialize i18n
+import '../lib/i18n';
 
 function AppContent() {
   const { isDark } = useTheme();
-  const colors = useThemeColors();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    // Dark theme fonts
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_700Bold,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_600SemiBold,
+    // Light theme fonts
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_700Bold,
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
   });
 
   if (!loaded) {
@@ -22,19 +56,18 @@ function AppContent() {
   }
 
   return (
-    <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }} edges={['bottom']}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+        <SafeAreaProvider>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="transactions" options={{ headerShown: false }} />
-            <Stack.Screen name="settings" options={{ headerShown: false }} />
             <Stack.Screen name="profile" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style={isDark ? 'light' : 'dark'} />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </NavigationThemeProvider>
+        </SafeAreaProvider>
+      </NavigationThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

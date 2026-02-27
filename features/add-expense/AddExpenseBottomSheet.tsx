@@ -1,20 +1,46 @@
+import { useTheme } from '@/contexts/ThemeContext';
+import { useFontFamily } from '@/hooks/useFontFamily';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetFooter,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-	Alert,
-	Animated,
-	Dimensions,
-	Modal,
-	ScrollView,
-	StyleSheet,
-	Switch,
-	Text,
-	TextInput,
-	TouchableOpacity,
-	View
+  Alert,
+  Animated,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const FOOTER_HEIGHT = 92;
+
+const CATEGORY_KEYS = [
+  'housing', 'food', 'shopping', 'vacation', 'subscriptions', 'health',
+  'car', 'leisure', 'school', 'utilities', 'clothing', 'children', 'investments', 'gaming',
+] as const;
+
+const MONTH_KEYS = [
+  'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+  'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+] as const;
 
 interface ExpenseData {
   description: string;
@@ -24,460 +50,655 @@ interface ExpenseData {
   category: string;
 }
 
-interface AddExpenseBottomSheetProps {
-  visible: boolean;
-  onClose: () => void;
+export interface AddExpenseBottomSheetRef {
+  open: () => void;
+  close: () => void;
 }
 
-const { height: screenHeight } = Dimensions.get('window');
+const EMPTY_EXPENSE: ExpenseData = {
+  description: '',
+  amount: '',
+  type: 'one-time',
+  date: new Date(),
+  category: '',
+};
 
-export default function AddExpenseBottomSheet({ visible, onClose }: AddExpenseBottomSheetProps) {
-  const colors = useThemeColors();
+const AddExpenseBottomSheet = forwardRef<AddExpenseBottomSheetRef>((_, ref) => {
   const { t } = useTranslation();
-  const [expenseData, setExpenseData] = useState<ExpenseData>({
-    description: '',
-    amount: '',
-    type: 'one-time',
-    date: new Date(),
-    category: ''
-  });
+  const colors = useThemeColors();
+  const fontFamily = useFontFamily();
+  const { isDark } = useTheme();
+  const { bottom: safeAreaBottom } = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  const sheetRef = useRef<BottomSheet>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  // Animation values
-  const translateY = useRef(new Animated.Value(screenHeight)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const [expenseData, setExpenseData] = useState<ExpenseData>(EMPTY_EXPENSE);
+  const [freq, setFreq] = useState<'monthly' | 'custom'>('monthly');
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [notifyMe, setNotifyMe] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<'description' | 'amount' | null>(null);
+  const [toggleWidth, setToggleWidth] = useState(0);
 
-  // Categories matching the image design
-  const categories = [
-    { id: 'bills', name: 'Bills', icon: 'receipt', color: '#007AFF' },
-    { id: 'food', name: 'Food', icon: 'restaurant', color: '#8E8E93' },
-    { id: 'shopping', name: 'Shopping', icon: 'bag', color: '#FF69B4' },
-    { id: 'vacation', name: 'Vacation', icon: 'airplane', color: '#FF9500' },
-    { id: 'medicine', name: 'Medicine', icon: 'medical', color: '#007AFF' },
-    { id: 'transport', name: 'Transport', icon: 'car', color: '#34C759' },
-    { id: 'entertainment', name: 'Fun', icon: 'film', color: '#AF52DE' },
-    { id: 'education', name: 'School', icon: 'school', color: '#FF3B30' },
-  ];
+  const typeAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    if (visible) {
-      // Slide up animation
-      Animated.parallel([
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 0.5,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      // Slide down animation
-      Animated.parallel([
-        Animated.timing(translateY, {
-          toValue: screenHeight,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
+  useImperativeHandle(ref, () => ({
+    open: () => sheetRef.current?.snapToIndex(0),
+    close: () => sheetRef.current?.close(),
+  }));
+
+  const resetState = useCallback(() => {
+    setExpenseData(EMPTY_EXPENSE);
+    setFreq('monthly');
+    setSelectedMonths([]);
+    setNotifyMe(false);
+    setShowDatePicker(false);
+    typeAnim.setValue(0);
+  }, [typeAnim]);
+
+  const handleClose = useCallback(() => {
+    sheetRef.current?.close();
+    resetState();
+  }, [resetState]);
+
+  const handleTypeChange = useCallback((type: 'one-time' | 'fixed') => {
+    setExpenseData((prev) => ({ ...prev, type }));
+    if (type === 'one-time') {
+      setFreq('monthly');
+      setSelectedMonths([]);
     }
-  }, [visible]);
+    Animated.spring(typeAnim, {
+      toValue: type === 'one-time' ? 0 : 1,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 60,
+    }).start();
+    if (type === 'fixed') {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [typeAnim]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!expenseData.description || !expenseData.amount || !expenseData.category) {
-      Alert.alert('Missing Information', 'Please fill in all required fields.');
+      Alert.alert(t('addExpense.errors.missingTitle'), t('addExpense.errors.missingBody'));
       return;
     }
-    
-    console.log('Saving expense:', expenseData);
-    Alert.alert('Success', 'Expense added successfully!', [
-      { text: 'OK', onPress: () => onClose() }
+    Alert.alert(t('addExpense.success.title'), t('addExpense.success.body'), [
+      { text: t('common.done'), onPress: handleClose },
     ]);
+  }, [expenseData, handleClose, t]);
+
+  const handleFreqChange = useCallback((value: 'monthly' | 'custom') => {
+    setFreq(value);
+    if (value === 'custom') {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, []);
+
+  const toggleMonth = (month: string) => {
+    setSelectedMonths((prev) =>
+      prev.includes(month) ? prev.filter((m) => m !== month) : [...prev, month]
+    );
   };
 
-  const selectCategory = (categoryId: string) => {
-    setExpenseData(prev => ({ ...prev, category: categoryId }));
-  };
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.6}
+      />
+    ),
+    []
+  );
 
-  const handleClose = () => {
-    setExpenseData({
-      description: '',
-      amount: '',
-      type: 'one-time',
-      date: new Date(),
-      category: ''
-    });
-    onClose();
-  };
+  const renderFooter = useCallback(
+    (props: any) => (
+      <BottomSheetFooter {...props} bottomInset={safeAreaBottom}>
+        <View style={[styles.footer, { backgroundColor: colors.surface }]}>
+          <TouchableOpacity
+            onPress={handleSave}
+            activeOpacity={0.85}
+            style={[styles.submitBtn, { backgroundColor: colors.accent }]}
+          >
+            <Text style={[styles.submitText, {
+              fontFamily: fontFamily.bodyBold,
+              color: isDark ? '#080C16' : '#FFFFFF',
+            }]}>
+              {t('addExpense.addButton')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetFooter>
+    ),
+    [safeAreaBottom, colors.surface, colors.accent, handleSave, fontFamily.bodyBold, isDark, t]
+  );
 
-  if (!visible) return null;
+  const accentColor = colors.accent;
+  const sliderHalfWidth = toggleWidth > 0 ? (toggleWidth - 8) / 2 : 0;
+  const focusedBorder = accentColor + '66';
+  const defaultBorder = colors.border;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
+    <BottomSheet
+      ref={sheetRef}
+      index={-1}
+      enableDynamicSizing
+      maxDynamicContentSize={screenHeight * 0.92}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
+      footerComponent={renderFooter}
+      backgroundStyle={{ backgroundColor: colors.surface }}
+      handleIndicatorStyle={{ backgroundColor: colors.surface3, width: 40 }}
+      onClose={resetState}
     >
-      <View style={styles.container}>
-        {/* Backdrop */}
-        <Animated.View 
-          style={[
-            styles.backdrop, 
-            { opacity: backdropOpacity }
-          ]} 
-        />
-        
-        {/* Bottom Sheet */}
-        <Animated.View 
-          style={[
-            styles.bottomSheet,
-            { 
-              backgroundColor: colors.background,
-              transform: [{ translateY }]
-            }
-          ]}
-        >
-          {/* Handle Bar */}
-          <View style={styles.handleContainer}>
-            <View style={[styles.handle, { backgroundColor: colors.separator }]} />
+      <BottomSheetScrollView
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: FOOTER_HEIGHT + safeAreaBottom + 16 },
+        ]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontFamily.headingBold }]}>
+              {t('addExpense.title')}{' '}
+              <Text style={{ color: accentColor, fontStyle: 'italic' }}>✦</Text>
+            </Text>
+            <Text style={[styles.headerSub, { color: colors.textTertiary, fontFamily: fontFamily.body }]}>
+              {t('addExpense.subtitle')}
+            </Text>
           </View>
+          <TouchableOpacity style={[styles.closeBtn, { backgroundColor: colors.surface2 }]} onPress={handleClose}>
+            <Ionicons name="close" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Header */}
-          <View style={[styles.header, { 
-            backgroundColor: colors.background,
-            borderBottomColor: colors.separator 
+        {/* Amount */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+            {t('addExpense.amount')}
+          </Text>
+          <View style={[styles.amountRow, {
+            backgroundColor: colors.surface2,
+            borderWidth: 1,
+            borderColor: focusedInput === 'amount' ? focusedBorder : defaultBorder,
           }]}>
-            <TouchableOpacity style={styles.backButton} onPress={handleClose}>
-              <Ionicons name="close" size={24} color={colors.textSecondary} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Add Expenses</Text>
-            <View style={styles.placeholder} />
+            <Text style={[styles.currency, { color: colors.textSecondary, fontFamily: fontFamily.mono }]}>€</Text>
+            <TextInput
+                style={[styles.amountInput, { color: colors.text, fontFamily: fontFamily.mono }]}
+                placeholder="0.00"
+                placeholderTextColor={colors.textTertiary}
+                value={expenseData.amount}
+                onChangeText={(text) => setExpenseData((prev) => ({ ...prev, amount: text }))}
+                keyboardType="decimal-pad"
+                onFocus={() => setFocusedInput('amount')}
+                onBlur={() => setFocusedInput(null)}
+            />
           </View>
+        </View>
 
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.content}>
-              {/* What did you spend on? */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>What did you spend on?</Text>
-                <TextInput
-                  style={[styles.textInput, { 
-                    backgroundColor: colors.card,
-                    borderColor: colors.separator,
-                    color: colors.text
-                  }]}
-                  placeholder="Enter expense description..."
-                  placeholderTextColor={colors.textSecondary}
-                  value={expenseData.description}
-                  onChangeText={(text) => setExpenseData(prev => ({ ...prev, description: text }))}
-                />
-              </View>
+        {/* Description */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+            {t('addExpense.description')}
+          </Text>
+          <TextInput
+            style={[styles.input, {
+              backgroundColor: colors.surface2,
+              color: colors.text,
+              fontFamily: fontFamily.body,
+              borderWidth: 1,
+              borderColor: focusedInput === 'description' ? focusedBorder : defaultBorder,
+            }]}
+            placeholder={t('addExpense.descriptionPlaceholder')}
+            placeholderTextColor={colors.textTertiary}
+            value={expenseData.description}
+            onChangeText={(text) => setExpenseData((prev) => ({ ...prev, description: text }))}
+            onFocus={() => setFocusedInput('description')}
+            onBlur={() => setFocusedInput(null)}
+          />
+        </View>
 
-              {/* Amount Spent */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Amount Spent</Text>
-                <View style={[styles.amountContainer, { 
-                  backgroundColor: colors.card,
-                  borderColor: colors.separator
-                }]}>
-                  <Text style={[styles.currencySymbol, { color: colors.textSecondary }]}>$</Text>
-                  <TextInput
-                    style={[styles.amountInput, { color: colors.text }]}
-                    placeholder="0.00"
-                    placeholderTextColor={colors.textSecondary}
-                    value={expenseData.amount}
-                    onChangeText={(text) => setExpenseData(prev => ({ ...prev, amount: text }))}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
 
-              {/* Date */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Date</Text>
-                <TouchableOpacity style={[styles.dateButton, { 
-                  backgroundColor: colors.card,
-                  borderColor: colors.separator
-                }]}>
-                  <Ionicons name="calendar" size={20} color={colors.primary} />
-                  <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                    {expenseData.date.toLocaleDateString()}
+
+        {/* Date + Account row */}
+        <View style={[styles.twoCol, { marginBottom: showDatePicker ? 0 : 20 }]}>
+          <View style={styles.halfSection}>
+            <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+              {t('addExpense.date')}
+            </Text>
+            <TouchableOpacity
+              style={[styles.selector, {
+                backgroundColor: colors.surface2,
+                borderWidth: 1,
+                borderColor: showDatePicker ? focusedBorder : defaultBorder,
+              }]}
+              onPress={() => setShowDatePicker((v) => !v)}
+            >
+              <Ionicons name="calendar-outline" size={16} color={colors.secondary} />
+              <Text style={[styles.selectorText, { color: colors.text, fontFamily: fontFamily.body }]}>
+                {expenseData.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.halfSection}>
+            <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+              {t('addExpense.account')}
+            </Text>
+            <TouchableOpacity style={[styles.selector, { backgroundColor: colors.surface2, borderWidth: 1, borderColor: defaultBorder }]}>
+              <Ionicons name="wallet-outline" size={16} color={colors.secondary} />
+              <Text style={[styles.selectorText, { color: colors.text, fontFamily: fontFamily.body }]}>
+                {t('addExpense.personalAccount')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Inline date picker */}
+        {showDatePicker && (
+          <View style={[styles.datePickerWrap, { backgroundColor: isDark ? colors.surface3 : colors.surface2 }]}>
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.datePickerDoneRow} onPress={() => setShowDatePicker(false)}>
+                <Text style={{ color: accentColor, fontFamily: fontFamily.bodyMedium, fontSize: 14 }}>{t('common.done')}</Text>
+              </TouchableOpacity>
+            )}
+            <DateTimePicker
+              value={expenseData.date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              maximumDate={new Date()}
+              themeVariant={isDark ? 'dark' : 'light'}
+              textColor={colors.text}
+              accentColor={accentColor}
+              onChange={(_, selectedDate) => {
+                if (Platform.OS === 'android') setShowDatePicker(false);
+                if (selectedDate) setExpenseData((prev) => ({ ...prev, date: selectedDate }));
+              }}
+            />
+          </View>
+        )}
+
+        <View style={{ height: 10 }} />
+
+        {/* Categories */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+            {t('addExpense.category')}
+          </Text>
+          <View style={styles.pillGrid}>
+            {CATEGORY_KEYS.map((key) => {
+              const isSelected = expenseData.category === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: isSelected ? accentColor + '1A' : colors.surface2,
+                      borderColor: isSelected ? accentColor : colors.border,
+                    },
+                  ]}
+                  onPress={() => setExpenseData((prev) => ({ ...prev, category: key }))}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.pillText,
+                    { color: isSelected ? accentColor : colors.textSecondary, fontFamily: fontFamily.body }
+                  ]}>
+                    {t(`addExpense.categories.${key}`)}
                   </Text>
                 </TouchableOpacity>
-              </View>
+              );
+            })}
+          </View>
+        </View>
 
-              {/* Select Categories */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Categories</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.categoriesContainer}
+        {/* Type — animated radio toggle */}
+        <View style={[styles.section, { marginBottom: expenseData.type === 'fixed' ? 20 : 0 }]}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+            {t('addExpense.type')}
+          </Text>
+          <View
+            style={[styles.typeToggle, { backgroundColor: colors.surface2 }]}
+            onLayout={(e) => setToggleWidth(e.nativeEvent.layout.width)}
+          >
+            {sliderHalfWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.typeSlider,
+                  {
+                    backgroundColor: accentColor + '22',
+                    borderColor: accentColor,
+                    width: sliderHalfWidth,
+                    transform: [{
+                      translateX: typeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, sliderHalfWidth],
+                      }),
+                    }],
+                  },
+                ]}
+              />
+            )}
+            {([
+              { value: 'one-time' as const, labelKey: 'addExpense.oneTime' },
+              { value: 'fixed' as const, labelKey: 'addExpense.fixed' },
+            ]).map(({ value, labelKey }) => {
+              const isActive = expenseData.type === value;
+              return (
+                <TouchableOpacity
+                  key={value}
+                  style={styles.typeBtn}
+                  onPress={() => handleTypeChange(value)}
+                  activeOpacity={0.7}
                 >
-                  {categories.map((category) => (
-                    <TouchableOpacity
-                      key={category.id}
-                      style={[
-                        styles.categoryItem,
-                        { 
-                          backgroundColor: expenseData.category === category.id 
-                            ? colors.primary + '20' 
-                            : colors.card,
-                          borderColor: expenseData.category === category.id 
-                            ? colors.primary 
-                            : colors.separator
-                        }
-                      ]}
-                      onPress={() => selectCategory(category.id)}
-                    >
-                      <View style={[styles.categoryIcon, { backgroundColor: category.color + '20' }]}>
-                        <Ionicons name={category.icon as any} size={24} color={category.color} />
-                      </View>
-                      <Text style={[
-                        styles.categoryName, 
-                        { 
-                          color: expenseData.category === category.id 
-                            ? colors.primary 
-                            : colors.text 
-                        }
-                      ]}>
-                        {category.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+                  <Text style={[
+                    styles.typeBtnText,
+                    {
+                      color: isActive ? accentColor : colors.textSecondary,
+                      fontFamily: isActive ? fontFamily.bodyMedium : fontFamily.body,
+                    }
+                  ]}>
+                    {t(labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
-              {/* Expense Type */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Expense Type</Text>
-                <View style={styles.typeContainer}>
-                  <Text style={[
-                    styles.typeLabel, 
-                    { 
-                      color: expenseData.type === 'one-time' 
-                        ? colors.text 
-                        : colors.textSecondary 
-                    }
-                  ]}>
-                    One-time
-                  </Text>
-                  <Switch
-                    value={expenseData.type === 'fixed'}
-                    onValueChange={(value) => setExpenseData(prev => ({ 
-                      ...prev, 
-                      type: value ? 'fixed' : 'one-time' 
-                    }))}
-                    trackColor={{ false: colors.separator, true: colors.primary }}
-                    thumbColor={colors.card}
-                  />
-                  <Text style={[
-                    styles.typeLabel, 
-                    { 
-                      color: expenseData.type === 'fixed' 
-                        ? colors.text 
-                        : colors.textSecondary 
-                    }
-                  ]}>
-                    Fixed
-                  </Text>
+        {/* Fixed extra fields */}
+        {expenseData.type === 'fixed' && (
+          <View style={[styles.fixedBox, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
+            <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium, marginBottom: 10 }]}>
+              {t('addExpense.recurrence')}
+            </Text>
+
+            <View style={[styles.twoCol, { marginBottom: 14 }]}>
+              {([
+                { value: 'monthly' as const, labelKey: 'addExpense.monthly' },
+                { value: 'custom' as const, labelKey: 'addExpense.custom' },
+              ]).map(({ value, labelKey }) => {
+                const isActive = freq === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    style={[
+                      styles.freqBtn,
+                      {
+                        backgroundColor: isActive ? accentColor + '22' : colors.surface3,
+                        borderColor: isActive ? accentColor : colors.border,
+                      },
+                    ]}
+                    onPress={() => handleFreqChange(value)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.freqBtnText,
+                      {
+                        color: isActive ? accentColor : colors.textSecondary,
+                        fontFamily: isActive ? fontFamily.bodyMedium : fontFamily.body,
+                      }
+                    ]}>
+                      {t(labelKey)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {freq === 'custom' && (
+              <View style={{ marginBottom: 14 }}>
+                <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium, marginBottom: 8 }]}>
+                  {t('addExpense.selectMonths')}
+                </Text>
+                <View style={styles.pillGrid}>
+                  {MONTH_KEYS.map((key) => {
+                    const isSelected = selectedMonths.includes(key);
+                    return (
+                      <TouchableOpacity
+                        key={key}
+                        style={[
+                          styles.monthPill,
+                          {
+                            backgroundColor: isSelected ? accentColor + '1A' : colors.surface3,
+                            borderColor: isSelected ? accentColor : colors.border,
+                          },
+                        ]}
+                        onPress={() => toggleMonth(key)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[
+                          styles.monthPillText,
+                          { color: isSelected ? accentColor : colors.textSecondary, fontFamily: fontFamily.body }
+                        ]}>
+                          {t(`addExpense.months.${key}`)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
-            </View>
-          </ScrollView>
+            )}
 
-          {/* Add Button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.addButton, { backgroundColor: colors.primary }]}
-              onPress={handleSave}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
+            <TouchableOpacity style={styles.checkRow} onPress={() => setNotifyMe((v) => !v)} activeOpacity={0.7}>
+              <View style={[
+                styles.checkbox,
+                {
+                  backgroundColor: notifyMe ? accentColor : 'transparent',
+                  borderColor: notifyMe ? accentColor : colors.textTertiary,
+                }
+              ]}>
+                {notifyMe && (
+                  <Text style={[styles.checkMark, { color: isDark ? '#080C16' : '#FFFFFF' }]}>✓</Text>
+                )}
+              </View>
+              <Text style={[styles.checkLabel, { color: colors.textSecondary, fontFamily: fontFamily.body }]}>
+                {t('addExpense.notifyMe')}
+              </Text>
             </TouchableOpacity>
           </View>
-        </Animated.View>
-      </View>
-    </Modal>
+        )}
+      </BottomSheetScrollView>
+    </BottomSheet>
   );
-}
+});
+
+AddExpenseBottomSheet.displayName = 'AddExpenseBottomSheet';
+
+export default AddExpenseBottomSheet;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-end',
+  scrollContent: {
+    paddingHorizontal: 20,
   },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#000',
-  },
-  bottomSheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    minHeight: screenHeight * 0.7,
-    maxHeight: screenHeight * 0.9,
-  },
-  handleContainer: {
-    alignItems: 'center',
+  footer: {
+    paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 8,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+    paddingBottom: 16,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    minHeight: 60,
-    paddingTop: 20,
+    paddingTop: 4,
+    paddingBottom: 22,
   },
-  backButton: {
-    padding: 8,
-    marginLeft: 0,
+  headerLeft: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
+    fontSize: 20,
+    marginBottom: 3,
   },
-  placeholder: {
-    width: 40,
+  headerSub: {
+    fontSize: 12,
   },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
   },
   section: {
-    marginBottom: 25,
+    marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#1F2937',
+  label: {
+    fontSize: 11,
+    letterSpacing: 0.4,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
-  textInput: {
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: '#FFFFFF',
+  input: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
   },
-  amountContainer: {
+  amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginRight: 8,
-    color: '#9CA3AF',
+  currency: {
+    fontSize: 20,
+    marginRight: 6,
   },
   amountInput: {
     flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 24,
   },
-  dateButton: {
+  twoCol: {
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
     gap: 12,
   },
-  dateText: {
-    fontSize: 16,
-    color: '#9CA3AF',
+  halfSection: {
+    flex: 1,
   },
-  categoriesContainer: {
-    paddingHorizontal: 5,
-    gap: 12,
-  },
-  categoryItem: {
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    minWidth: 80,
-    backgroundColor: '#FFFFFF',
-  },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  categoryName: {
-    fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
-    color: '#1F2937',
-  },
-  typeContainer: {
+  selector: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    minWidth: 200,
-    maxWidth: 250,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 8,
   },
-  typeLabel: {
+  selectorText: {
     fontSize: 14,
-    fontWeight: '500',
   },
-  buttonContainer: {
-    padding: 20,
-    paddingBottom: 30,
+  datePickerWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 4,
   },
-  addButton: {
-    height: 50,
-    borderRadius: 8,
+  datePickerDoneRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  pillGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  pillText: {
+    fontSize: 13,
+  },
+  typeToggle: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+    position: 'relative',
+  },
+  typeSlider: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  typeBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  typeBtnText: {
+    fontSize: 13,
+  },
+  fixedBox: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 4,
+  },
+  freqBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  freqBtnText: {
+    fontSize: 12,
+  },
+  monthPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  monthPillText: {
+    fontSize: 11,
+  },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  addButtonText: {
-    color: '#FFFFFF',
+  checkMark: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  checkLabel: {
+    fontSize: 13,
+    flex: 1,
+  },
+  submitBtn: {
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  submitText: {
     fontSize: 16,
-    fontWeight: '600',
   },
 });

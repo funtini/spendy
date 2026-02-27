@@ -117,6 +117,64 @@
     "appVersion": "Spendy v{{version}}",
     "appCopyright": "© 2024 Spendy. All rights reserved."
   },
+  "addExpense": {
+    "title": "Add Expense",
+    "subtitle": "Track your spending in seconds",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. Netflix subscription...",
+    "amount": "Amount",
+    "date": "Date",
+    "account": "Account",
+    "personalAccount": "Personal",
+    "category": "Category",
+    "type": "Type",
+    "oneTime": "⚡ One-time",
+    "fixed": "🔄 Fixed",
+    "recurrence": "Recurrence",
+    "monthly": "📅 Monthly",
+    "custom": "🗓 Custom",
+    "selectMonths": "Select months",
+    "notifyMe": "🔔 Notify me when upcoming next month",
+    "addButton": "Add Expense →",
+    "errors": {
+      "missingTitle": "Missing Information",
+      "missingBody": "Please fill in all required fields."
+    },
+    "success": {
+      "title": "Success",
+      "body": "Expense added successfully!"
+    },
+    "categories": {
+      "housing": "Housing",
+      "food": "Food",
+      "shopping": "Shopping",
+      "vacation": "Vacation",
+      "subscriptions": "Subscriptions",
+      "health": "Health",
+      "car": "Car",
+      "leisure": "Leisure",
+      "school": "School",
+      "utilities": "Utilities",
+      "clothing": "Clothing",
+      "children": "Children",
+      "investments": "Investments",
+      "gaming": "Gaming"
+    },
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    }
+  },
   "languages": {
     "en": "English",
     "pt": "Português"

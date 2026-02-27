@@ -1,97 +1,110 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useFontFamily } from '@/hooks/useFontFamily';
+
+const WEEK_DATA = [
+  { key: 'M', value: 62, height: 62 },
+  { key: 'T', value: 45, height: 45 },
+  { key: 'W', value: 78, height: 78 },
+  { key: 'T', value: 35, height: 35 },
+  { key: 'F', value: 90, height: 90 },
+  { key: 'S', value: 55, height: 55 },
+  { key: 'S', value: 40, height: 40 },
+];
+
 export const WeeklyTrend: React.FC = () => {
-  const { t } = useTranslation();
+  const colors = useThemeColors();
+  const ff = useFontFamily();
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t('statistics.weeklyTrend')}</Text>
-      <View style={styles.weeklyChart}>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.mon')}</Text>
-          <View style={[styles.chartBarFill, { height: '60%' }]} />
-          <Text style={styles.chartValue}>$120</Text>
-        </View>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.tue')}</Text>
-          <View style={[styles.chartBarFill, { height: '40%' }]} />
-          <Text style={styles.chartValue}>$80</Text>
-        </View>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.wed')}</Text>
-          <View style={[styles.chartBarFill, { height: '80%' }]} />
-          <Text style={styles.chartValue}>$160</Text>
-        </View>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.thu')}</Text>
-          <View style={[styles.chartBarFill, { height: '30%' }]} />
-          <Text style={styles.chartValue}>$60</Text>
-        </View>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.fri')}</Text>
-          <View style={[styles.chartBarFill, { height: '90%' }]} />
-          <Text style={styles.chartValue}>$180</Text>
-        </View>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.sat')}</Text>
-          <View style={[styles.chartBarFill, { height: '70%' }]} />
-          <Text style={styles.chartValue}>$140</Text>
-        </View>
-        <View style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{t('statistics.weekDays.sun')}</Text>
-          <View style={[styles.chartBarFill, { height: '50%' }]} />
-          <Text style={styles.chartValue}>$100</Text>
-        </View>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.title, { color: colors.text, fontFamily: ff.heading }]}>
+        Weekly Trend
+      </Text>
+      <View style={styles.chart}>
+        {WEEK_DATA.map((day, i) => (
+          <View key={i} style={styles.barColumn}>
+            <View style={[styles.barTrack, { backgroundColor: colors.surface3 }]}>
+              <View
+                style={[
+                  styles.bar,
+                  {
+                    height: `${day.height}%` as any,
+                    backgroundColor: i === 4
+                      ? colors.accent
+                      : `rgba(42,109,181,${0.2 + day.value / 200})`,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={[styles.dayLabel, { color: colors.textTertiary, fontFamily: ff.mono }]}>
+              {day.key}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <View style={styles.footer}>
+        <Text style={[styles.footerText, { color: colors.textTertiary, fontFamily: ff.body }]}>
+          Peak: Friday €90
+        </Text>
+        <Text style={[styles.footerAccent, { color: colors.accent, fontFamily: ff.bodyBold }]}>
+          Avg: €63/day
+        </Text>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  section: {
-    backgroundColor: "#FFFFFF",
-    margin: 20,
-    marginTop: 0,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  card: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1C1C1E",
-    marginBottom: 15,
+  title: {
+    fontSize: 15,
+    marginBottom: 14,
   },
-  weeklyChart: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    height: 200,
-    paddingTop: 20,
+  chart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    height: 72,
+    gap: 5,
   },
-  chartBar: {
-    alignItems: "center",
+  barColumn: {
     flex: 1,
+    alignItems: 'center',
+    height: '100%',
+    justifyContent: 'flex-end',
   },
-  chartLabel: {
-    fontSize: 12,
-    color: "#8E8E93",
-    marginBottom: 10,
+  barTrack: {
+    width: '100%',
+    flex: 1,
+    borderRadius: 4,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
   },
-  chartBarFill: {
-    width: 20,
-    backgroundColor: "#007AFF",
-    borderRadius: 10,
-    marginBottom: 10,
+  bar: {
+    width: '100%',
+    borderRadius: 4,
   },
-  chartValue: {
-    fontSize: 10,
-    color: "#8E8E93",
+  dayLabel: {
+    fontSize: 9,
+    marginTop: 5,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  footerText: {
+    fontSize: 11,
+  },
+  footerAccent: {
+    fontSize: 11,
   },
 });

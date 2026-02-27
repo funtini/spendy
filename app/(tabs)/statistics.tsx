@@ -1,22 +1,34 @@
-import {
-	MonthlyOverview,
-	SpendingByCategory,
-	StatisticsHeader,
-	WeeklyTrend
-} from '@/features/statistics';
-import { useThemeColors } from '@/hooks/useThemeColors';
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  BarChart,
+  DonutChart,
+  PeriodTabs,
+  SpendingByCategory,
+  StatisticsHeader,
+  WeeklyTrend,
+} from '@/features/statistics';
+import { useThemeColors } from '@/hooks/useThemeColors';
+
+type Period = 'Weekly' | 'Monthly' | 'Yearly';
+
 export default function StatisticsScreen() {
   const colors = useThemeColors();
+  const [period, setPeriod] = useState<Period>('Monthly');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
-      <ScrollView style={styles.scrollView}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <StatisticsHeader />
-        <MonthlyOverview />
+        <PeriodTabs selected={period} onSelect={setPeriod} />
+        <BarChart />
+        <DonutChart />
         <SpendingByCategory />
         <WeeklyTrend />
       </ScrollView>
@@ -30,6 +42,8 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginBottom: 20,
+  },
+  content: {
+    paddingBottom: 100,
   },
 });

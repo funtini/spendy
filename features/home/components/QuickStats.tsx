@@ -1,67 +1,80 @@
-import { useThemeColors } from '@/hooks/useThemeColors';
-import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-export const QuickStats: React.FC = () => {
-  const { t } = useTranslation();
-  const colors = useThemeColors();
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useFontFamily } from '@/hooks/useFontFamily';
+import { SparkLine } from '@/features/shared';
 
-  // Mock data - in real app this would come from state/props
-  const currentMonthSpending = 1250.00;
-  const monthlyAverage = 1380.00;
-  
-  // Get current month name
-  const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long' });
-  
-  // Determine if current month is above or below average
-  const isAboveAverage = currentMonthSpending > monthlyAverage;
-  const trendIconName = isAboveAverage ? "trending-up" : "trending-down";
-  const trendIconColor = isAboveAverage ? colors.error : colors.success;
-  
-  // Calculate the difference
-  const difference = currentMonthSpending - monthlyAverage;
-  const differenceText = difference >= 0 ? `+$${difference.toFixed(0)}` : `$${difference.toFixed(0)}`;
+const MONTHLY_DATA = [980, 1100, 1050, 1380, 1200, 1320, 1250];
+const BUDGET = 2000;
+
+export const QuickStats: React.FC = () => {
+  const colors = useThemeColors();
+  const ff = useFontFamily();
+
+  const currentMonthSpending = 1450;
+  const monthlyAverage = 1738;
+  const budgetUsed = Math.round((currentMonthSpending / BUDGET) * 100);
+  const isOverAvg = currentMonthSpending > monthlyAverage;
 
   return (
-    <View style={styles.statsContainer}>
-      <View style={[styles.statCard, styles.highlightedCard, { 
-        backgroundColor: colors.card,
-        borderColor: colors.highlight,
-        shadowColor: colors.text,
+    <View style={styles.row}>
+      {/* This Month card */}
+      <View style={[styles.card, {
+        backgroundColor: colors.primaryCard,
+        borderColor: colors.primaryCardBorder,
       }]}>
-        <View style={[styles.iconContainer, styles.highlightedIconContainer, { 
-          backgroundColor: colors.surfaceSecondary 
+        <Text style={[styles.cardLabel, { color: colors.textTertiary, fontFamily: ff.bodyMedium }]}>
+          THIS MONTH
+        </Text>
+        <Text style={[styles.cardAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
+          €1,450
+        </Text>
+        <Text style={[styles.cardSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
+          of €{BUDGET.toLocaleString()} budget
+        </Text>
+
+        <View style={[styles.badge, {
+          backgroundColor: colors.error + '22',
         }]}>
-          <Ionicons name={trendIconName as any} size={20} color={trendIconColor} />
+          <Text style={[styles.badgeText, { color: colors.error, fontFamily: ff.bodyBold }]}>
+            ▲ +8%
+          </Text>
         </View>
-        <Text style={[styles.statValue, styles.highlightedValue, { 
-          color: colors.text 
-        }]}>${currentMonthSpending.toFixed(0)}</Text>
-        <View style={styles.labelContainer}>
-          <Text style={[styles.statLabel, styles.highlightedLabel, { 
-            color: colors.textSecondary 
-          }]}>{currentMonth}</Text>
+
+        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+          <View style={[styles.progressFill, {
+            width: `${Math.min(budgetUsed, 100)}%` as any,
+            backgroundColor: colors.accent,
+          }]} />
         </View>
       </View>
-      
-      <View style={[styles.statCard, { 
-        backgroundColor: colors.card,
-        shadowColor: colors.text,
+
+      {/* Monthly Avg card */}
+      <View style={[styles.card, {
+        backgroundColor: colors.secondaryCard,
+        borderColor: colors.secondaryCardBorder,
       }]}>
-        <View style={[styles.iconContainer, { 
-          backgroundColor: colors.surfaceSecondary 
+        <Text style={[styles.cardLabel, { color: colors.textTertiary, fontFamily: ff.bodyMedium }]}>
+          MONTHLY AVG
+        </Text>
+        <Text style={[styles.cardAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
+          €1,738
+        </Text>
+        <Text style={[styles.cardSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
+          last 6 months
+        </Text>
+
+        <View style={[styles.badge, {
+          backgroundColor: colors.secondary + '22',
         }]}>
-          <Ionicons name="analytics" size={20} color={colors.primary} />
+          <Text style={[styles.badgeText, { color: colors.secondary, fontFamily: ff.bodyBold }]}>
+            ▼ −16%
+          </Text>
         </View>
-        <Text style={[styles.statValue, { 
-          color: colors.text 
-        }]}>${monthlyAverage.toFixed(0)}</Text>
-        <View style={styles.labelContainer}>
-          <Text style={[styles.statLabel, { 
-            color: colors.textSecondary 
-          }]}>{t('home.quickStats.monthlyAverage')}</Text>
+
+        <View style={styles.sparkContainer}>
+          <SparkLine data={MONTHLY_DATA} width={100} height={34} color={colors.secondary} gradientId="avgGradient" />
         </View>
       </View>
     </View>
@@ -69,64 +82,53 @@ export const QuickStats: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  statsContainer: {
-    flexDirection: "row",
-    padding: 20,
-    gap: 15,
+  row: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    gap: 10,
   },
-  statCard: {
+  card: {
     flex: 1,
-    padding: 20,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1.5,
   },
-  highlightedCard: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+  cardLabel: {
+    fontSize: 10,
+    letterSpacing: 0.7,
+    marginBottom: 6,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
+  cardAmount: {
+    fontSize: 26,
+    letterSpacing: -0.5,
+    lineHeight: 30,
+    marginBottom: 3,
+  },
+  cardSub: {
+    fontSize: 11,
+    marginBottom: 7,
+  },
+  badge: {
+    alignSelf: 'flex-start',
     borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  highlightedIconContainer: {
-    // Inherits from iconContainer
-  },
-  iconContainerSmall: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#F2F2F7",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "700",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     marginBottom: 8,
   },
-  highlightedValue: {
-    fontSize: 26,
+  badgeText: {
+    fontSize: 10,
   },
-  labelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  progressTrack: {
+    height: 3,
+    borderRadius: 2,
+    overflow: 'hidden',
   },
-  statLabel: {
-    fontSize: 14,
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
-  highlightedLabel: {
-    fontWeight: "600",
+  sparkContainer: {
+    marginTop: 8,
   },
 });

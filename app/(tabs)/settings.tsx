@@ -1,7 +1,8 @@
 import { useTheme } from '@/contexts/ThemeContext';
 import { LanguageSwitcher } from '@/features/shared';
+import { useFontFamily } from '@/hooks/useFontFamily';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
@@ -11,220 +12,161 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const { isDark, setThemeMode } = useTheme();
   const colors = useThemeColors();
+  const ff = useFontFamily();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [dataSyncEnabled, setDataSyncEnabled] = useState(true);
 
   const handleDarkModeToggle = async (value: boolean) => {
-    const newThemeMode = value ? 'dark' : 'light';
-    await setThemeMode(newThemeMode);
+    await setThemeMode(value ? 'dark' : 'light');
   };
 
+  const SectionLabel = ({ label }: { label: string }) => (
+    <Text style={[styles.sectionLabel, { color: colors.textTertiary, fontFamily: ff.bodyBold }]}>
+      {label.toUpperCase()}
+    </Text>
+  );
+
+  const SettingRow = ({
+    icon,
+    iconColor,
+    label,
+    description,
+    right,
+  }: {
+    icon: keyof typeof Ionicons.glyphMap;
+    iconColor: string;
+    label: string;
+    description?: string;
+    right: React.ReactNode;
+  }) => (
+    <View style={[styles.row, { borderBottomColor: colors.border }]}>
+      <View style={[styles.iconWrap, { backgroundColor: iconColor + '20' }]}>
+        <Ionicons name={icon} size={16} color={iconColor} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={[styles.rowLabel, { color: colors.text, fontFamily: ff.bodyMedium }]}>
+          {label}
+        </Text>
+        {description && (
+          <Text style={[styles.rowDesc, { color: colors.textTertiary, fontFamily: ff.body }]}>
+            {description}
+          </Text>
+        )}
+      </View>
+      {right}
+    </View>
+  );
+
+  const trackColor = { false: colors.surface3, true: colors.accent };
+  const thumbColor = colors.surface;
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={[styles.header, { 
-          backgroundColor: colors.card,
-          borderBottomColor: colors.separator 
-        }]}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('settings.title')}</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('settings.subtitle')}</Text>
-        </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-        {/* Notifications Section */}
-        <View style={[styles.section, { 
-          backgroundColor: colors.card,
-          shadowColor: colors.text 
-        }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.notifications')}</Text>
-          
-          <View style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="notifications" size={20} color={colors.primary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.pushNotifications')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.pushNotificationsDesc')}</Text>
-              </View>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: colors.separator, true: colors.primary }}
-              thumbColor={colors.card}
-            />
+        {/* Profile Hero */}
+        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatarCircle, { backgroundColor: colors.accent }]}>
+            <Text style={[styles.avatarText, { fontFamily: ff.headingBold }]}>J</Text>
           </View>
-
-          <View style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="mail" size={20} color={colors.success} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.emailNotifications')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.emailNotificationsDesc')}</Text>
-              </View>
+          <View style={styles.heroInfo}>
+            <Text style={[styles.heroName, { color: colors.text, fontFamily: ff.headingBold }]}>
+              João Silva
+            </Text>
+            <Text style={[styles.heroEmail, { color: colors.textTertiary, fontFamily: ff.body }]}>
+              joao.silva@email.com
+            </Text>
+            <View style={[styles.proBadge, { backgroundColor: colors.accent + '22' }]}>
+              <Text style={[styles.proBadgeText, { color: colors.accent, fontFamily: ff.bodyBold }]}>
+                ✦ Pro Plan
+              </Text>
             </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: colors.separator, true: colors.primary }}
-              thumbColor={colors.card}
-            />
           </View>
         </View>
 
-        {/* Appearance Section */}
-        <View style={[styles.section, { 
-          backgroundColor: colors.card,
-          shadowColor: colors.text 
-        }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.appearance')}</Text>
-          
-          <View style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="moon" size={20} color={colors.secondary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.darkMode')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.darkModeDesc')}</Text>
-              </View>
-            </View>
-            <Switch
-              value={isDark}
-              onValueChange={handleDarkModeToggle}
-              trackColor={{ false: colors.separator, true: colors.primary }}
-              thumbColor={colors.card}
-            />
-          </View>
-
-          <View style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="color-palette" size={20} color={colors.warning} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.accentColor')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.accentColorDesc')}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-          </View>
+        {/* Notifications */}
+        <SectionLabel label="Preferences" />
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <SettingRow icon="notifications" iconColor={colors.secondary} label="Push Notifications"
+            right={<Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={trackColor} thumbColor={thumbColor} />}
+          />
+          <SettingRow icon="moon" iconColor={colors.info} label="Dark Mode"
+            right={<Switch value={isDark} onValueChange={handleDarkModeToggle} trackColor={trackColor} thumbColor={thumbColor} />}
+          />
+          <SettingRow icon="finger-print" iconColor={colors.error} label="Biometric Auth"
+            right={<Switch value={biometricEnabled} onValueChange={setBiometricEnabled} trackColor={trackColor} thumbColor={thumbColor} />}
+          />
         </View>
 
-        {/* Security Section */}
-        <View style={[styles.section, { 
-          backgroundColor: colors.card,
-          shadowColor: colors.text 
-        }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.security')}</Text>
-          
-          <View style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="finger-print" size={20} color={colors.error} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.biometric')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.biometricDesc')}</Text>
-              </View>
-            </View>
-            <Switch
-              value={biometricEnabled}
-              onValueChange={setBiometricEnabled}
-              trackColor={{ false: colors.separator, true: colors.primary }}
-              thumbColor={colors.card}
-            />
-          </View>
+        <SectionLabel label="App" />
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {[
+            { icon: 'globe-outline' as const, label: 'Language', val: 'English', color: colors.info },
+            { icon: 'cash-outline' as const, label: 'Currency', val: 'EUR €', color: colors.secondary },
+            { icon: 'calendar-outline' as const, label: 'Start of Month', val: '1st', color: colors.warning },
+          ].map((item, i) => (
+            <TouchableOpacity key={i}>
+              <SettingRow icon={item.icon} iconColor={item.color} label={item.label}
+                right={
+                  <View style={styles.valueRow}>
+                    <Text style={[styles.rowVal, { color: colors.textTertiary, fontFamily: ff.body }]}>{item.val}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                  </View>
+                }
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="lock-closed" size={20} color={colors.primary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.changePassword')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.changePasswordDesc')}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+        <SectionLabel label="Account Sharing" />
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {[
+            { icon: 'people-outline' as const, label: 'Shared Accounts', val: '1 active', color: colors.secondary },
+            { icon: 'mail-outline' as const, label: 'Invite Member', val: '', color: colors.accent },
+            { icon: 'link-outline' as const, label: 'Linked Services', val: '2', color: colors.info },
+          ].map((item, i) => (
+            <TouchableOpacity key={i}>
+              <SettingRow icon={item.icon} iconColor={item.color} label={item.label}
+                right={
+                  <View style={styles.valueRow}>
+                    {item.val ? <Text style={[styles.rowVal, { color: colors.textTertiary, fontFamily: ff.body }]}>{item.val}</Text> : null}
+                    <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                  </View>
+                }
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <SectionLabel label="Support" />
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {[
+            { icon: 'chatbubble-outline' as const, label: 'Help & Support', val: '', color: colors.info },
+            { icon: 'star-outline' as const, label: 'Rate Spendy', val: '', color: colors.warning },
+            { icon: 'document-text-outline' as const, label: 'Privacy Policy', val: '', color: colors.textTertiary },
+            { icon: 'information-circle-outline' as const, label: 'About App', val: 'v1.0.0', color: colors.textTertiary },
+          ].map((item, i) => (
+            <TouchableOpacity key={i}>
+              <SettingRow icon={item.icon} iconColor={item.color} label={item.label}
+                right={
+                  <View style={styles.valueRow}>
+                    {item.val ? <Text style={[styles.rowVal, { color: colors.textTertiary, fontFamily: ff.body }]}>{item.val}</Text> : null}
+                    <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                  </View>
+                }
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity>
+            <Text style={[styles.signOut, { color: colors.accent, fontFamily: ff.bodyBold }]}>Sign Out</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Data & Sync Section */}
-        <View style={[styles.section, { 
-          backgroundColor: colors.card,
-          shadowColor: colors.text 
-        }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.dataSync')}</Text>
-          
-          <View style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="cloud-upload" size={20} color={colors.success} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.autoSync')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.autoSyncDesc')}</Text>
-              </View>
-            </View>
-            <Switch
-              value={dataSyncEnabled}
-              onValueChange={setDataSyncEnabled}
-              trackColor={{ false: colors.separator, true: colors.primary }}
-              thumbColor={colors.card}
-            />
-          </View>
-
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="download" size={20} color={colors.primary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.exportData')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.exportDataDesc')}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Language Section */}
-        <View style={[styles.section, { 
-          backgroundColor: colors.card,
-          shadowColor: colors.text 
-        }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.language')}</Text>
-          <LanguageSwitcher />
-        </View>
-
-        {/* About Section */}
-        <View style={[styles.section, { 
-          backgroundColor: colors.card,
-          shadowColor: colors.text 
-        }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.about')}</Text>
-          
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="information-circle" size={20} color={colors.primary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.version')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Spendy v1.0.0</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="help-circle" size={20} color={colors.warning} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.help')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.helpDesc')}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.separator }]}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="star" size={20} color={colors.warning} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingName, { color: colors.text }]}>{t('settings.rateApp')}</Text>
-                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{t('settings.rateAppDesc')}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-          </TouchableOpacity>
+          <Text style={[styles.footerNote, { color: colors.textTertiary, fontFamily: ff.body }]}>
+            SPENDY v1.0.0 · Made with ♥
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -232,64 +174,71 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
+  content: { paddingBottom: 100, paddingTop: 16 },
+  heroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    gap: 14,
   },
-  scrollView: {
-    flex: 1,
+  avatarCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  header: {
-    padding: 20,
-    paddingTop: 20,
-    borderBottomWidth: 1,
+  avatarText: { fontSize: 22, color: '#fff' },
+  heroInfo: { flex: 1 },
+  heroName: { fontSize: 18, marginBottom: 2 },
+  heroEmail: { fontSize: 12, marginBottom: 6 },
+  proBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 16,
+  proBadgeText: { fontSize: 10 },
+  sectionLabel: {
+    fontSize: 10,
+    letterSpacing: 1,
+    marginHorizontal: 20,
+    marginBottom: 6,
+    marginTop: 18,
   },
   section: {
-    marginTop: 20,
     marginHorizontal: 20,
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1.5,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    padding: 20,
-    paddingBottom: 10,
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 20,
-    paddingTop: 15,
-    paddingBottom: 15,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     borderBottomWidth: 1,
+    gap: 12,
   },
-  settingInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
+  iconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  settingText: {
-    marginLeft: 15,
-    flex: 1,
-  },
-  settingName: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 2,
-  },
-  settingDescription: {
-    fontSize: 14,
-  },
+  rowText: { flex: 1 },
+  rowLabel: { fontSize: 14 },
+  rowDesc: { fontSize: 11, marginTop: 1 },
+  valueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  rowVal: { fontSize: 12 },
+  footer: { alignItems: 'center', paddingTop: 10, paddingBottom: 4 },
+  signOut: { fontSize: 13, marginBottom: 8 },
+  footerNote: { fontSize: 10 },
 });

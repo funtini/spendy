@@ -1,6 +1,6 @@
 {
   "common": {
-    "loading": "Carregando...",
+    "loading": "Loading...",
     "error": "Erro",
     "save": "Salvar",
     "cancel": "Cancelar",
@@ -116,6 +116,64 @@
     "signOut": "Sair",
     "appVersion": "Spendy v{{version}}",
     "appCopyright": "© 2024 Spendy. Todos os direitos reservados."
+  },
+  "addExpense": {
+    "title": "Adicionar Despesa",
+    "subtitle": "Registe os seus gastos em segundos",
+    "description": "Descrição",
+    "descriptionPlaceholder": "ex. Assinatura Netflix...",
+    "amount": "Valor",
+    "date": "Data",
+    "account": "Conta",
+    "personalAccount": "Pessoal",
+    "category": "Categoria",
+    "type": "Tipo",
+    "oneTime": "⚡ Pontual",
+    "fixed": "🔄 Fixo",
+    "recurrence": "Recorrência",
+    "monthly": "📅 Mensal",
+    "custom": "🗓 Personalizado",
+    "selectMonths": "Selecionar meses",
+    "notifyMe": "🔔 Notificar-me no próximo mês",
+    "addButton": "Adicionar Despesa →",
+    "errors": {
+      "missingTitle": "Informação em falta",
+      "missingBody": "Por favor preencha todos os campos obrigatórios."
+    },
+    "success": {
+      "title": "Sucesso",
+      "body": "Despesa adicionada com sucesso!"
+    },
+    "categories": {
+      "housing": "Casa",
+      "food": "Alimentação",
+      "shopping": "Supermercado",
+      "vacation": "Férias",
+      "subscriptions": "Subscrições",
+      "health": "Saúde",
+      "car": "Carro",
+      "leisure": "Lazer",
+      "school": "Escola",
+      "utilities": "Serviços",
+      "clothing": "Roupa",
+      "children": "Filhos",
+      "investments": "Investimentos",
+      "gaming": "Jogos"
+    },
+    "months": {
+      "jan": "Jan",
+      "feb": "Fev",
+      "mar": "Mar",
+      "apr": "Abr",
+      "may": "Mai",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Ago",
+      "sep": "Set",
+      "oct": "Out",
+      "nov": "Nov",
+      "dec": "Dez"
+    }
   },
   "languages": {
     "en": "English",

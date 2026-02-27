@@ -1,10 +1,15 @@
-# CLAUDE.md
+# SPENDY - Expense tracking app
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Project Purpose
+Personal finance app to track expenses, manage assets/investments, and monitor upcoming fixed expenses. Multi-account support with account sharing between users.
 
-Spendy is a React Native expense tracking app built with Expo (managed workflow), TypeScript, and expo-router for file-based navigation. Supports iOS, Android, and Web. Uses the New Architecture (`newArchEnabled: true`).
+## Tech Stack
+- Frontend: React Native with Expo (managed workflow), TypeScript, and expo-router for file-based navigation. Supports iOS and Android. Uses the New Architecture (`newArchEnabled: true`).
+- Navigation: Expo Router (file-based routing)
+- Auth: Clerk (@clerk/clerk-expo)
+- Database ORM: Prisma
 
 ## Commands
 
