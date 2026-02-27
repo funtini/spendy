@@ -32,10 +32,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const FOOTER_HEIGHT = 92;
 
-const CATEGORY_KEYS = [
-  'housing', 'food', 'shopping', 'vacation', 'subscriptions', 'health',
-  'car', 'leisure', 'school', 'utilities', 'clothing', 'children', 'investments', 'gaming',
-] as const;
+const CATEGORIES = [
+  { key: 'housing',       icon: 'home-outline',            color: '#FF6B35' },
+  { key: 'food',          icon: 'restaurant-outline',      color: '#4CAF50' },
+  { key: 'shopping',      icon: 'bag-outline',             color: '#E91E8C' },
+  { key: 'vacation',      icon: 'airplane-outline',        color: '#00BCD4' },
+  { key: 'subscriptions', icon: 'repeat-outline',          color: '#9C27B0' },
+  { key: 'health',        icon: 'heart-outline',           color: '#F44336' },
+  { key: 'car',           icon: 'car-outline',             color: '#43A047' },
+  { key: 'leisure',       icon: 'film-outline',            color: '#7E57C2' },
+  { key: 'school',        icon: 'book-outline',            color: '#FF9800' },
+  { key: 'utilities',     icon: 'flash-outline',           color: '#FFC107' },
+  { key: 'clothing',      icon: 'shirt-outline',           color: '#EC407A' },
+  { key: 'children',      icon: 'happy-outline',           color: '#42A5F5' },
+  { key: 'investments',   icon: 'trending-up-outline',     color: '#26A69A' },
+  { key: 'gaming',        icon: 'game-controller-outline', color: '#5C6BC0' },
+];
 
 const MONTH_KEYS = [
   'jan', 'feb', 'mar', 'apr', 'may', 'jun',
@@ -334,14 +346,18 @@ const AddExpenseBottomSheet = forwardRef<AddExpenseBottomSheetRef>((_, ref) => {
           <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
             {t('addExpense.category')}
           </Text>
-          <View style={styles.pillGrid}>
-            {CATEGORY_KEYS.map((key) => {
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryList}
+          >
+            {CATEGORIES.map(({ key, icon, color }) => {
               const isSelected = expenseData.category === key;
               return (
                 <TouchableOpacity
                   key={key}
                   style={[
-                    styles.pill,
+                    styles.categoryCard,
                     {
                       backgroundColor: isSelected ? accentColor + '1A' : colors.surface2,
                       borderColor: isSelected ? accentColor : colors.border,
@@ -350,16 +366,22 @@ const AddExpenseBottomSheet = forwardRef<AddExpenseBottomSheetRef>((_, ref) => {
                   onPress={() => setExpenseData((prev) => ({ ...prev, category: key }))}
                   activeOpacity={0.7}
                 >
-                  <Text style={[
-                    styles.pillText,
-                    { color: isSelected ? accentColor : colors.textSecondary, fontFamily: fontFamily.body }
-                  ]}>
+                  <View style={[styles.categoryIconCircle, { backgroundColor: color + '22' }]}>
+                    <Ionicons name={icon as any} size={22} color={color} />
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.categoryCardLabel,
+                      { color: isSelected ? accentColor : colors.textSecondary, fontFamily: fontFamily.body },
+                    ]}
+                  >
                     {t(`addExpense.categories.${key}`)}
                   </Text>
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
 
         {/* Type — animated radio toggle */}
@@ -615,14 +637,29 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
+  categoryList: {
+    gap: 10,
+    paddingBottom: 2,
   },
-  pillText: {
-    fontSize: 13,
+  categoryCard: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    width: 74,
+  },
+  categoryIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryCardLabel: {
+    fontSize: 11,
+    textAlign: 'center',
   },
   typeToggle: {
     flexDirection: 'row',
