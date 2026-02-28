@@ -6,6 +6,7 @@ import { categoriesRoutes } from "./categories.routes.js";
 import { dashboardRoutes } from "./dashboard.routes.js";
 import { statisticsRoutes } from "./statistics.routes.js";
 import { upcomingBillsRoutes } from "./upcoming-bills.routes.js";
+import { recurringSchedulesRoutes } from "./recurring-schedules.routes.js";
 
 export const routes = Router();
 
@@ -16,3 +17,4 @@ routes.use("/categories", categoriesRoutes);
 routes.use("/dashboard", dashboardRoutes);
 routes.use("/statistics", statisticsRoutes);
 routes.use("/upcoming-bills", upcomingBillsRoutes);
+routes.use("/recurring-schedules", recurringSchedulesRoutes);
