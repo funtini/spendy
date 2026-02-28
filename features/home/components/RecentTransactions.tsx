@@ -84,8 +84,15 @@ export const RecentTransactions: React.FC = () => {
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        {TRANSACTIONS.map((tx) => (
-          <View key={tx.id} style={[styles.row, { borderBottomColor: colors.separator }]}>
+        {TRANSACTIONS.map((tx, index) => (
+          <View
+            key={tx.id}
+            style={[
+              styles.row,
+              { borderBottomColor: colors.separator },
+              index === TRANSACTIONS.length - 1 && styles.rowLast,
+            ]}
+          >
             <View style={[styles.iconCircle, { backgroundColor: tx.iconBg }]}>
               <Ionicons name={tx.icon} size={18} color={tx.iconColor} />
             </View>
@@ -166,6 +173,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
   },
   iconCircle: {
     width: 42,
