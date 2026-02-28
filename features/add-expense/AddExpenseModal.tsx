@@ -27,6 +27,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Account, AccountPicker, GRADIENT_PRESETS } from '@/features/home';
 import CategoryPicker from './components/CategoryPicker';
 import RecurrenceSection from './components/RecurrenceSection';
 import TypeToggle from './components/TypeToggle';
@@ -55,6 +56,15 @@ const EMPTY_EXPENSE: ExpenseData = {
 const SPRING_CONTENT = { friction: 9, tension: 55 } as const;
 const SPRING_TOGGLE = { friction: 8, tension: 60 } as const;
 
+const DEFAULT_ACCOUNTS: Account[] = [
+  {
+    id: 'personal',
+    name: 'Personal',
+    gradient: GRADIENT_PRESETS[0],
+    owners: [{ email: '', alias: 'Me' }],
+  },
+];
+
 const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -70,6 +80,9 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const typeAnim = useRef(new Animated.Value(0)).current;
+
+  const [accounts, setAccounts] = useState<Account[]>(DEFAULT_ACCOUNTS);
+  const [selectedAccountId, setSelectedAccountId] = useState('personal');
 
   const [expenseData, setExpenseData] = useState<ExpenseData>(EMPTY_EXPENSE);
   const [freq, setFreq] = useState<'monthly' | 'custom'>('monthly');
@@ -276,12 +289,12 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
                   <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
                     {t('addExpense.account')}
                   </Text>
-                  <TouchableOpacity style={[styles.selector, { backgroundColor: colors.surface2, borderWidth: 1, borderColor: defaultBorder }]}>
-                    <Ionicons name="wallet-outline" size={16} color={colors.secondary} />
-                    <Text style={[styles.selectorText, { color: colors.text, fontFamily: fontFamily.body }]}>
-                      {t('addExpense.personalAccount')}
-                    </Text>
-                  </TouchableOpacity>
+                  <AccountPicker
+                    accounts={accounts}
+                    selectedAccountId={selectedAccountId}
+                    variant="input"
+                    onSelect={setSelectedAccountId}
+                  />
                 </View>
               </View>
 
