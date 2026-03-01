@@ -6,9 +6,10 @@ import {
   endOfWeek,
   eachDayOfInterval,
   format,
+  subMonths,
 } from "date-fns";
 
-interface StatisticsParams {
+export interface StatisticsParams {
   accountId: string;
   month?: number;
   year?: number;
@@ -100,6 +101,39 @@ const getSpendingByCategory = async (
       percentage: maxSpending > 0 ? Math.round((amount / maxSpending) * 100) : 0,
     };
   });
+};
+
+export interface MonthlyTrendParams {
+  accountId: string;
+  months?: number;
+}
+
+export const getMonthlyTrend = async (accountId: string, months = 6) => {
+  const now = new Date();
+  const results: { month: string; year: number; amount: number }[] = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const targetDate = subMonths(now, i);
+    const monthStart = startOfMonth(targetDate);
+    const monthEnd = endOfMonth(targetDate);
+
+    const agg = await prisma.transaction.aggregate({
+      where: {
+        accountId,
+        date: { gte: monthStart, lte: monthEnd },
+        amount: { lt: 0 },
+      },
+      _sum: { amount: true },
+    });
+
+    results.push({
+      month: format(targetDate, "MMM"),
+      year: targetDate.getFullYear(),
+      amount: Math.abs(agg._sum.amount ?? 0),
+    });
+  }
+
+  return results;
 };
 
 const getWeeklyTrend = async (accountId: string) => {

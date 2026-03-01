@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 import { startOfMonth, endOfMonth } from "date-fns";
 
-interface ListTransactionsParams {
+export interface ListTransactionsParams {
   accountId: string;
   page: number;
   limit: number;

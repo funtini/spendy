@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { getAuth } from "../middleware/auth.js";
 import * as transactionsService from "../services/transactions.service.js";
+import type { ListTransactionsParams } from "../services/transactions.service.js";
 import * as accountsService from "../services/accounts.service.js";
 
 export const list = async (
@@ -10,14 +11,7 @@ export const list = async (
 ) => {
   try {
     const { userId } = getAuth(req);
-    const { accountId, page, limit, month, year, categoryId } = req.query as unknown as {
-      accountId: string;
-      page: number;
-      limit: number;
-      month?: number;
-      year?: number;
-      categoryId?: string;
-    };
+    const { accountId, page, limit, month, year, categoryId } = req.query as unknown as ListTransactionsParams;
     await accountsService.verifyAccountMembership(userId!, accountId);
     const result = await transactionsService.listTransactions({
       accountId,

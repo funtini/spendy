@@ -7,3 +7,4 @@ export const statisticsRoutes = Router();
 statisticsRoutes.use(requireAuth());
 
 statisticsRoutes.get("/", statisticsController.get);
+statisticsRoutes.get("/monthly-trend", statisticsController.monthlyTrend);
