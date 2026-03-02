@@ -2,12 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
 
 export const LogoutSection: React.FC = () => {
   const { t } = useTranslation();
+  const { signOut } = useAuth();
 
   return (
-    <TouchableOpacity style={styles.logoutButton}>
+    <TouchableOpacity style={styles.logoutButton} onPress={() => signOut()}>
       <Ionicons name="log-out" size={20} color="#FFFFFF" />
       <Text style={styles.logoutText}>{t('profile.signOut')}</Text>
     </TouchableOpacity>

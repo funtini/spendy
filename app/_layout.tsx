@@ -22,21 +22,28 @@ import {
   Fraunces_700Bold,
 } from '@expo-google-fonts/fraunces';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
+import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import { useEffect } from 'react';
 
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { AccountProvider } from '@/contexts/AccountContext';
 import { queryClient, persister } from '@/lib/queryClient';
+import { setAuthTokenProvider } from '@/services/api';
 import '../lib/i18n';
+
+const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 function AppContent() {
   const { isDark } = useTheme();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [loaded] = useFonts({
     // Dark theme fonts
     DMSans_400Regular,
@@ -54,7 +61,11 @@ function AppContent() {
     Fraunces_700Bold,
   });
 
-  if (!loaded) {
+  useEffect(() => {
+    setAuthTokenProvider(() => getToken());
+  }, [getToken]);
+
+  if (!loaded || !isLoaded) {
     return null;
   }
 
@@ -65,9 +76,11 @@ function AppContent() {
           <SafeAreaProvider>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="transactions" options={{ headerShown: false }} />
               <Stack.Screen name="profile" options={{ headerShown: false }} />
             </Stack>
+            {!isSignedIn && <Redirect href="/(auth)/sign-in" />}
             <StatusBar style={isDark ? 'light' : 'dark'} />
           </SafeAreaProvider>
         </NavigationThemeProvider>
@@ -78,12 +91,14 @@ function AppContent() {
 
 export default function RootLayout() {
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AppContent />
-        </LanguageProvider>
-      </ThemeProvider>
-    </PersistQueryClientProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} tokenCache={tokenCache}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AppContent />
+          </LanguageProvider>
+        </ThemeProvider>
+      </PersistQueryClientProvider>
+    </ClerkProvider>
   );
 }

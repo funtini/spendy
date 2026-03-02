@@ -2,9 +2,19 @@ import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useUser } from '@clerk/clerk-expo';
 
 export const ProfileHeader: React.FC = () => {
   const { t } = useTranslation();
+  const { user } = useUser();
+
+  const displayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.primaryEmailAddress?.emailAddress || 'User'
+    : 'User';
+  const email = user?.primaryEmailAddress?.emailAddress ?? '';
+  const memberSinceDate = user?.createdAt
+    ? new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(user.createdAt)
+    : '';
 
   return (
     <View style={styles.profileHeader}>
@@ -16,9 +26,11 @@ export const ProfileHeader: React.FC = () => {
           <Ionicons name="camera" size={16} color="#007AFF" />
         </TouchableOpacity>
       </View>
-      <Text style={styles.userName}>John Doe</Text>
-      <Text style={styles.userEmail}>john.doe@example.com</Text>
-      <Text style={styles.memberSince}>{t('profile.memberSince', { date: 'January 2024' })}</Text>
+      <Text style={styles.userName}>{displayName}</Text>
+      <Text style={styles.userEmail}>{email}</Text>
+      {memberSinceDate !== '' && (
+        <Text style={styles.memberSince}>{t('profile.memberSince', { date: memberSinceDate })}</Text>
+      )}
     </View>
   );
 };
