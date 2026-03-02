@@ -1,24 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
-
-interface DonutSegment {
-  label: string;
-  value: number;
-  color: string;
-}
-
-const SEGMENTS: DonutSegment[] = [
-  { label: '🍔 Food', value: 32, color: '#E8533A' },
-  { label: '🏠 Housing', value: 25, color: '#2A6DB5' },
-  { label: '🚗 Transport', value: 15, color: '#D4760E' },
-  { label: '📺 Subs', value: 12, color: '#6B4FC8' },
-  { label: '🛍 Shopping', value: 10, color: '#C44F9A' },
-  { label: '⚡ Other', value: 6, color: '#3D8A6E' },
-];
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useStatistics } from '@/hooks/queries';
 
 const RADIUS = 44;
 const STROKE_WIDTH = 15;
@@ -29,6 +16,11 @@ const CENTER = SIZE / 2;
 export const DonutChart: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
+  const { selectedAccountId } = useSelectedAccount();
+  const { data, isLoading } = useStatistics(selectedAccountId);
+
+  const categories = data?.spendingByCategory ?? [];
+  const total = categories.reduce((sum, c) => sum + c.amount, 0);
 
   let cumulativePercent = 0;
 
@@ -37,55 +29,59 @@ export const DonutChart: React.FC = () => {
       <Text style={[styles.title, { color: colors.text, fontFamily: ff.heading }]}>
         By Category
       </Text>
-      <View style={styles.content}>
-        <View style={styles.donutWrapper}>
-          <Svg width={SIZE} height={SIZE}>
-            <Circle
-              cx={CENTER} cy={CENTER} r={RADIUS}
-              stroke={colors.surface3} strokeWidth={STROKE_WIDTH} fill="none"
-            />
-            {SEGMENTS.map((seg, i) => {
-              const dashLen = (seg.value / 100) * CIRCUMFERENCE;
-              const rotation = -90 + cumulativePercent * 3.6;
-              cumulativePercent += seg.value;
-              return (
-                <Circle
-                  key={i}
-                  cx={CENTER} cy={CENTER} r={RADIUS}
-                  stroke={seg.color} strokeWidth={STROKE_WIDTH} fill="none"
-                  strokeDasharray={`${dashLen} ${CIRCUMFERENCE - dashLen}`}
-                  strokeLinecap="butt"
-                  rotation={rotation}
-                  origin={`${CENTER}, ${CENTER}`}
-                />
-              );
-            })}
-            <Circle cx={CENTER} cy={CENTER} r={RADIUS - STROKE_WIDTH / 2} fill={colors.card} />
-          </Svg>
-          <View style={styles.centerLabel}>
-            <Text style={[styles.centerAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
-              €1,450
-            </Text>
-            <Text style={[styles.centerSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
-              Total
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.legend}>
-          {SEGMENTS.map((seg, i) => (
-            <View key={i} style={styles.legendRow}>
-              <View style={[styles.legendDot, { backgroundColor: seg.color, borderRadius: 3 }]} />
-              <Text style={[styles.legendLabel, { color: colors.textSecondary, fontFamily: ff.body }]}>
-                {seg.label}
+      {isLoading ? (
+        <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+      ) : (
+        <View style={styles.content}>
+          <View style={styles.donutWrapper}>
+            <Svg width={SIZE} height={SIZE}>
+              <Circle
+                cx={CENTER} cy={CENTER} r={RADIUS}
+                stroke={colors.surface3} strokeWidth={STROKE_WIDTH} fill="none"
+              />
+              {categories.map((seg, i) => {
+                const dashLen = (seg.percentage / 100) * CIRCUMFERENCE;
+                const rotation = -90 + cumulativePercent * 3.6;
+                cumulativePercent += seg.percentage;
+                return (
+                  <Circle
+                    key={i}
+                    cx={CENTER} cy={CENTER} r={RADIUS}
+                    stroke={seg.color} strokeWidth={STROKE_WIDTH} fill="none"
+                    strokeDasharray={`${dashLen} ${CIRCUMFERENCE - dashLen}`}
+                    strokeLinecap="butt"
+                    rotation={rotation}
+                    origin={`${CENTER}, ${CENTER}`}
+                  />
+                );
+              })}
+              <Circle cx={CENTER} cy={CENTER} r={RADIUS - STROKE_WIDTH / 2} fill={colors.card} />
+            </Svg>
+            <View style={styles.centerLabel}>
+              <Text style={[styles.centerAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
+                €{(total / 100).toFixed(0)}
               </Text>
-              <Text style={[styles.legendValue, { color: colors.text, fontFamily: ff.mono }]}>
-                {seg.value}%
+              <Text style={[styles.centerSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
+                Total
               </Text>
             </View>
-          ))}
+          </View>
+
+          <View style={styles.legend}>
+            {categories.slice(0, 6).map((seg, i) => (
+              <View key={i} style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: seg.color, borderRadius: 3 }]} />
+                <Text style={[styles.legendLabel, { color: colors.textSecondary, fontFamily: ff.body }]} numberOfLines={1}>
+                  {seg.name}
+                </Text>
+                <Text style={[styles.legendValue, { color: colors.text, fontFamily: ff.mono }]}>
+                  {seg.percentage}%
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 };
@@ -140,5 +136,8 @@ const styles = StyleSheet.create({
   },
   legendValue: {
     fontSize: 11,
+  },
+  loader: {
+    height: 120,
   },
 });

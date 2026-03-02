@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
-import { createAccountSchema, updateAccountSchema } from "../schemas/account.schema.js";
+import { createAccountSchema, updateAccountSchema, addMemberSchema } from "../schemas/account.schema.js";
 import * as accountsController from "../controllers/accounts.controller.js";
 
 export const accountsRoutes = Router();
@@ -23,3 +23,9 @@ accountsRoutes.patch(
 );
 
 accountsRoutes.delete("/:id", accountsController.remove);
+
+accountsRoutes.post(
+  "/:id/members",
+  validate(addMemberSchema),
+  accountsController.addMember,
+);

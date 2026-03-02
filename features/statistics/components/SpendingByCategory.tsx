@@ -1,44 +1,49 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
-
-const CATEGORIES = [
-  { name: '🍔 Food', amount: '€464', percent: 32, color: '#E8533A' },
-  { name: '🏠 Housing', amount: '€362', percent: 25, color: '#2A6DB5' },
-  { name: '🚗 Transport', amount: '€217', percent: 15, color: '#D4760E' },
-  { name: '📺 Subs', amount: '€174', percent: 12, color: '#6B4FC8' },
-  { name: '🛍 Shopping', amount: '€145', percent: 10, color: '#C44F9A' },
-  { name: '⚡ Other', amount: '€87', percent: 6, color: '#3D8A6E' },
-];
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useStatistics } from '@/hooks/queries';
 
 export const SpendingByCategory: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
+  const { selectedAccountId } = useSelectedAccount();
+  const { data, isLoading } = useStatistics(selectedAccountId);
+
+  const categories = data?.spendingByCategory ?? [];
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.title, { color: colors.text, fontFamily: ff.heading }]}>
         Breakdown
       </Text>
-      {CATEGORIES.map((cat, i) => (
-        <View key={i} style={[styles.row, { borderBottomColor: colors.separator }]}>
-          <View style={[styles.dot, { backgroundColor: cat.color, borderRadius: 3 }]} />
-          <Text style={[styles.name, { color: colors.text, fontFamily: ff.bodyMedium }]}>
-            {cat.name}
-          </Text>
-          <View style={[styles.barTrack, { backgroundColor: colors.surface3 }]}>
-            <View style={[styles.barFill, { width: `${cat.percent}%` as any, backgroundColor: cat.color }]} />
+      {isLoading ? (
+        <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+      ) : categories.length === 0 ? (
+        <Text style={[styles.empty, { color: colors.textTertiary, fontFamily: ff.body }]}>
+          No spending data this month
+        </Text>
+      ) : (
+        categories.map((cat, i) => (
+          <View key={cat.categoryId} style={[styles.row, { borderBottomColor: colors.separator }]}>
+            <View style={[styles.dot, { backgroundColor: cat.color, borderRadius: 3 }]} />
+            <Text style={[styles.name, { color: colors.text, fontFamily: ff.bodyMedium }]}>
+              {cat.name}
+            </Text>
+            <View style={[styles.barTrack, { backgroundColor: colors.surface3 }]}>
+              <View style={[styles.barFill, { width: `${cat.percentage}%` as any, backgroundColor: cat.color }]} />
+            </View>
+            <Text style={[styles.percent, { color: colors.textTertiary, fontFamily: ff.mono }]}>
+              {cat.percentage}%
+            </Text>
+            <Text style={[styles.amount, { color: colors.text, fontFamily: ff.mono }]}>
+              €{(cat.amount / 100).toFixed(0)}
+            </Text>
           </View>
-          <Text style={[styles.percent, { color: colors.textTertiary, fontFamily: ff.mono }]}>
-            {cat.percent}%
-          </Text>
-          <Text style={[styles.amount, { color: colors.text, fontFamily: ff.mono }]}>
-            {cat.amount}
-          </Text>
-        </View>
-      ))}
+        ))
+      )}
     </View>
   );
 };
@@ -90,5 +95,13 @@ const styles = StyleSheet.create({
     width: 48,
     fontSize: 12,
     textAlign: 'right',
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  empty: {
+    textAlign: 'center',
+    fontSize: 13,
+    paddingVertical: 16,
   },
 });

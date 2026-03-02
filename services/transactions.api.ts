@@ -2,6 +2,7 @@ import { api } from "./api";
 import type {
   TransactionListResponse,
   TransactionDto,
+  TransactionType,
 } from "@shared/types";
 
 interface ListTransactionsParams {
@@ -22,7 +23,7 @@ export const createTransaction = (data: {
   amount: number;
   description: string;
   date: string;
-  type?: "ONE_TIME" | "RECURRING";
+  type?: TransactionType;
 }) => api<TransactionDto>("/transactions", { method: "POST", body: data });
 
 export const updateTransaction = (
@@ -33,7 +34,7 @@ export const updateTransaction = (
     amount?: number;
     description?: string;
     date?: string;
-    type?: "ONE_TIME" | "RECURRING";
+    type?: TransactionType;
   },
 ) => api<TransactionDto>(`/transactions/${id}`, { method: "PUT", body: data });
 

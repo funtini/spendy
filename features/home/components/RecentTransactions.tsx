@@ -1,74 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useTransactions } from '@/hooks/queries';
+import { TransactionType } from '@shared/types';
+import type { ComponentProps } from 'react';
 
-interface Transaction {
-  id: string;
-  name: string;
-  category: string;
-  type: 'Fixed' | 'Once';
-  amount: number;
-  icon: keyof typeof Ionicons.glyphMap;
-  iconColor: string;
-  iconBg: string;
-  date: string;
-}
-
-const TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    name: "McDonald's",
-    category: 'Food',
-    type: 'Once',
-    amount: -12.5,
-    icon: 'fast-food',
-    iconColor: '#E8533A',
-    iconBg: '#FFF0EE',
-    date: 'Today',
-  },
-  {
-    id: '2',
-    name: 'Metro Card',
-    category: 'Transport',
-    type: 'Fixed',
-    amount: -30.0,
-    icon: 'subway',
-    iconColor: '#D4760E',
-    iconBg: '#FFF8EE',
-    date: 'Today',
-  },
-  {
-    id: '3',
-    name: 'Netflix',
-    category: 'Subscriptions',
-    type: 'Fixed',
-    amount: -15.99,
-    icon: 'play-circle',
-    iconColor: '#2A6DB5',
-    iconBg: '#EEF3FF',
-    date: 'Yesterday',
-  },
-  {
-    id: '4',
-    name: 'Salary',
-    category: 'Income',
-    type: 'Fixed',
-    amount: 2400,
-    icon: 'briefcase',
-    iconColor: '#3D8A6E',
-    iconBg: '#EEFAF5',
-    date: 'Feb 20',
-  },
-];
+const DEFAULT_ICON: ComponentProps<typeof Ionicons>['name'] = 'receipt-outline';
 
 export const RecentTransactions: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
   const router = useRouter();
+  const { selectedAccountId } = useSelectedAccount();
+
+  const { data, isLoading } = useTransactions({ accountId: selectedAccountId, limit: 5 });
+  const transactions = data?.data ?? [];
 
   return (
     <View style={styles.wrapper}>
@@ -84,62 +35,85 @@ export const RecentTransactions: React.FC = () => {
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        {TRANSACTIONS.map((tx, index) => (
-          <View
-            key={tx.id}
-            style={[
-              styles.row,
-              { borderBottomColor: colors.separator },
-              index === TRANSACTIONS.length - 1 && styles.rowLast,
-            ]}
-          >
-            <View style={[styles.iconCircle, { backgroundColor: tx.iconBg }]}>
-              <Ionicons name={tx.icon} size={18} color={tx.iconColor} />
-            </View>
-            <View style={styles.details}>
-              <Text style={[styles.name, { color: colors.text, fontFamily: ff.bodyMedium }]}>
-                {tx.name}
-              </Text>
-              <View style={styles.metaRow}>
-                <Text style={[styles.category, { color: colors.textTertiary, fontFamily: ff.body }]}>
-                  {tx.category}
-                </Text>
-                <View style={[
-                  styles.pill,
-                  {
-                    backgroundColor: tx.type === 'Fixed'
-                      ? 'rgba(42,109,181,0.12)'
-                      : colors.surface3,
-                  }
-                ]}>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+        ) : transactions.length === 0 ? (
+          <Text style={[styles.empty, { color: colors.textTertiary, fontFamily: ff.body }]}>
+            No transactions yet
+          </Text>
+        ) : (
+          transactions.map((tx, index) => {
+            const amountCents = tx.amount;
+            const amountEuros = amountCents / 100;
+            const isExpense = amountCents < 0;
+            const iconName = (tx.category?.icon ?? DEFAULT_ICON) as ComponentProps<typeof Ionicons>['name'];
+            const iconColor = tx.category?.color ?? colors.textSecondary;
+            const iconBg = iconColor + '22';
+            const date = new Date(tx.date);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const isToday = date.toDateString() === today.toDateString();
+            const isYesterday = date.toDateString() === yesterday.toDateString();
+            const dateLabel = isToday
+              ? 'Today'
+              : isYesterday
+              ? 'Yesterday'
+              : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+            return (
+              <View
+                key={tx.id}
+                style={[
+                  styles.row,
+                  { borderBottomColor: colors.separator },
+                  index === transactions.length - 1 && styles.rowLast,
+                ]}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
+                  <Ionicons name={iconName} size={18} color={iconColor} />
+                </View>
+                <View style={styles.details}>
+                  <Text style={[styles.name, { color: colors.text, fontFamily: ff.bodyMedium }]}>
+                    {tx.description}
+                  </Text>
+                  <View style={styles.metaRow}>
+                    <Text style={[styles.category, { color: colors.textTertiary, fontFamily: ff.body }]}>
+                      {tx.category?.name ?? 'Other'}
+                    </Text>
+                    {tx.type === TransactionType.RECURRING ? (
+                      <View style={[styles.pill, { backgroundColor: 'rgba(42,109,181,0.12)' }]}>
+                        <Text style={[styles.pillText, { color: '#2A6DB5', fontFamily: ff.bodyBold }]}>
+                          Fixed
+                        </Text>
+                      </View>
+                    ) : tx.addedByAlias ? (
+                      <View style={[styles.pill, { backgroundColor: colors.surface3 }]}>
+                        <Text style={[styles.pillText, { color: colors.textTertiary, fontFamily: ff.bodyBold }]}>
+                          {tx.addedByAlias}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+                <View style={styles.amountCol}>
                   <Text style={[
-                    styles.pillText,
+                    styles.amount,
                     {
-                      color: tx.type === 'Fixed' ? '#2A6DB5' : colors.textTertiary,
-                      fontFamily: ff.bodyBold,
+                      color: isExpense ? colors.error : colors.secondary,
+                      fontFamily: ff.mono,
                     }
                   ]}>
-                    {tx.type}
+                    {isExpense ? '-' : '+'}€{Math.abs(amountEuros).toFixed(2)}
+                  </Text>
+                  <Text style={[styles.date, { color: colors.textTertiary, fontFamily: ff.body }]}>
+                    {dateLabel}
                   </Text>
                 </View>
               </View>
-            </View>
-            <View style={styles.amountCol}>
-              <Text style={[
-                styles.amount,
-                {
-                  color: tx.amount < 0 ? colors.error : colors.secondary,
-                  fontFamily: ff.mono,
-                }
-              ]}>
-                {tx.amount < 0 ? '-' : '+'}€{Math.abs(tx.amount).toFixed(2)}
-              </Text>
-              <Text style={[styles.date, { color: colors.textTertiary, fontFamily: ff.body }]}>
-                {tx.date}
-              </Text>
-            </View>
-          </View>
-        ))}
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -218,5 +192,13 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 10,
     marginTop: 2,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  empty: {
+    textAlign: 'center',
+    fontSize: 13,
+    paddingVertical: 20,
   },
 });

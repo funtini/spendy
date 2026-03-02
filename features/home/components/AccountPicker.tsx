@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AccountRole } from '@shared/types';
 
 export interface GradientPreset {
   id: string;
@@ -35,6 +36,7 @@ export const GRADIENT_PRESETS: GradientPreset[] = [
 export interface AccountOwner {
   email: string;
   alias: string;
+  role: AccountRole;
 }
 
 export interface Account {
@@ -78,7 +80,16 @@ type Screen = 'list' | 'create';
 interface OwnerEntry {
   email: string;
   alias: string;
+  role: AccountRole;
+  isCurrentUser: boolean;
 }
+
+const ROLES: AccountRole[] = [AccountRole.OWNER, AccountRole.EDITOR, AccountRole.VIEWER];
+const ROLE_LABEL: Record<AccountRole, string> = {
+  [AccountRole.OWNER]: 'Owner',
+  [AccountRole.EDITOR]: 'Editor',
+  [AccountRole.VIEWER]: 'Viewer',
+};
 
 const EMPTY_USER = { email: '', alias: '' };
 
@@ -101,16 +112,24 @@ export const AccountPicker = ({
 
   const [newName, setNewName] = useState('');
   const [newGradient, setNewGradient] = useState<GradientPreset>(GRADIENT_PRESETS[0]);
+  // owners already confirmed (shown as chips); starts with "Me" (current user)
   const [owners, setOwners] = useState<OwnerEntry[]>([
-    { email: currentUser.email, alias: currentUser.alias },
+    { email: currentUser.email, alias: currentUser.alias || 'Me', role: AccountRole.OWNER, isCurrentUser: true },
   ]);
+  // the pending "add new owner" form
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [pendingAlias, setPendingAlias] = useState('');
+  const [pendingRole, setPendingRole] = useState<AccountRole>(AccountRole.EDITOR);
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
 
   const resetForm = useCallback(() => {
     setNewName('');
     setNewGradient(GRADIENT_PRESETS[0]);
-    setOwners([{ email: currentUser.email, alias: currentUser.alias }]);
+    setOwners([{ email: currentUser.email, alias: currentUser.alias || 'Me', role: AccountRole.OWNER, isCurrentUser: true }]);
+    setPendingEmail('');
+    setPendingAlias('');
+    setPendingRole(AccountRole.EDITOR);
     setScreen('list');
   }, [currentUser.email, currentUser.alias]);
 
@@ -130,26 +149,32 @@ export const AccountPicker = ({
   }, [onSelect]);
 
   const handleAddOwner = useCallback(() => {
-    setOwners((prev) => [...prev, { email: '', alias: '' }]);
-  }, []);
+    if (!pendingEmail.trim()) return;
+    setOwners((prev) => [
+      ...prev,
+      { email: pendingEmail.trim(), alias: pendingAlias.trim(), role: pendingRole, isCurrentUser: false },
+    ]);
+    setPendingEmail('');
+    setPendingAlias('');
+    setPendingRole(AccountRole.EDITOR);
+  }, [pendingEmail, pendingAlias, pendingRole]);
 
   const handleRemoveOwner = useCallback((index: number) => {
     setOwners((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleOwnerChange = useCallback((index: number, field: keyof OwnerEntry, value: string) => {
-    setOwners((prev) =>
-      prev.map((o, i) => (i === index ? { ...o, [field]: value } : o))
-    );
-  }, []);
-
   const handleCreate = useCallback(() => {
     if (!newName.trim() || !onCreateAccount) return;
-    onCreateAccount({ name: newName.trim(), gradient: newGradient, owners });
+    onCreateAccount({
+      name: newName.trim(),
+      gradient: newGradient,
+      owners,
+    });
     closeModal();
   }, [newName, newGradient, owners, onCreateAccount, closeModal]);
 
   const canCreate = newName.trim().length > 0;
+  const canAddPending = pendingEmail.trim().length > 0;
 
   const triggerStyle = variant === 'pill'
     ? [styles.triggerPill, { backgroundColor: colors.surface2 }]
@@ -354,56 +379,103 @@ export const AccountPicker = ({
                   </ScrollView>
                 </View>
 
-                {/* Owners */}
+                {/* Owners section */}
                 <View style={styles.formSection}>
                   <Text style={[styles.formLabel, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
                     {t('addExpense.owners')}
                   </Text>
-                  {owners.map((owner, index) => (
-                    <View
-                      key={index}
-                      style={[styles.ownerRow, { backgroundColor: colors.surface2, borderColor: colors.border }]}
-                    >
-                      <View style={styles.ownerFields}>
-                        <TextInput
-                          style={[
-                            styles.ownerInput,
-                            styles.ownerInputTop,
-                            { color: colors.text, fontFamily: fontFamily.body, borderBottomColor: colors.border },
-                          ]}
-                          placeholder={t('addExpense.ownerEmail')}
-                          placeholderTextColor={colors.textTertiary}
-                          value={owner.email}
-                          onChangeText={(v) => handleOwnerChange(index, 'email', v)}
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                        />
-                        <TextInput
-                          style={[styles.ownerInput, { color: colors.text, fontFamily: fontFamily.body }]}
-                          placeholder={t('addExpense.ownerAlias')}
-                          placeholderTextColor={colors.textTertiary}
-                          value={owner.alias}
-                          onChangeText={(v) => handleOwnerChange(index, 'alias', v)}
-                        />
-                      </View>
-                      {index > 0 && (
-                        <TouchableOpacity onPress={() => handleRemoveOwner(index)} style={styles.removeBtn} activeOpacity={0.7}>
-                          <Ionicons name="close-circle" size={22} color={colors.textTertiary} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ))}
 
-                  <TouchableOpacity
-                    style={[styles.addOwnerBtn, { borderColor: colors.border }]}
-                    onPress={handleAddOwner}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="add" size={16} color={colors.accent} />
-                    <Text style={[styles.addOwnerText, { color: colors.accent, fontFamily: fontFamily.bodyMedium }]}>
-                      {t('addExpense.addOwner')}
+                  {/* Preview chips of confirmed owners */}
+                  <View style={styles.ownerChips}>
+                    {owners.map((owner, index) => (
+                      <View
+                        key={index}
+                        style={[styles.ownerChip, { backgroundColor: colors.surface2, borderColor: colors.border }]}
+                      >
+                        <View style={[styles.ownerChipAvatar, { backgroundColor: colors.accent + '22' }]}>
+                          <Text style={[styles.ownerChipAvatarText, { color: colors.accent, fontFamily: fontFamily.bodyBold }]}>
+                            {(owner.alias || owner.email)[0]?.toUpperCase() ?? '?'}
+                          </Text>
+                        </View>
+                        <View style={styles.ownerChipInfo}>
+                          <Text style={[styles.ownerChipAlias, { color: colors.text, fontFamily: fontFamily.bodyMedium }]}>
+                            {owner.isCurrentUser ? 'Me' : (owner.alias || owner.email)}
+                          </Text>
+                          <Text style={[styles.ownerChipRole, { color: colors.textTertiary, fontFamily: fontFamily.body }]}>
+                            {ROLE_LABEL[owner.role]}
+                          </Text>
+                        </View>
+                        {!owner.isCurrentUser && (
+                          <TouchableOpacity onPress={() => handleRemoveOwner(index)} activeOpacity={0.7}>
+                            <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Add new owner form */}
+                  <View style={[styles.addOwnerForm, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
+                    <Text style={[styles.addOwnerFormLabel, { color: colors.textSecondary, fontFamily: fontFamily.bodyMedium }]}>
+                      Add member
                     </Text>
-                  </TouchableOpacity>
+                    <TextInput
+                      style={[styles.addOwnerInput, { color: colors.text, fontFamily: fontFamily.body, borderBottomColor: colors.border }]}
+                      placeholder="Email address"
+                      placeholderTextColor={colors.textTertiary}
+                      value={pendingEmail}
+                      onChangeText={setPendingEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                    <TextInput
+                      style={[styles.addOwnerInput, { color: colors.text, fontFamily: fontFamily.body, borderBottomColor: colors.border }]}
+                      placeholder="Alias (display name)"
+                      placeholderTextColor={colors.textTertiary}
+                      value={pendingAlias}
+                      onChangeText={setPendingAlias}
+                    />
+
+                    {/* Role picker */}
+                    <View style={styles.rolePicker}>
+                      {ROLES.map((role) => {
+                        const active = pendingRole === role;
+                        return (
+                          <TouchableOpacity
+                            key={role}
+                            style={[
+                              styles.roleBtn,
+                              {
+                                backgroundColor: active ? colors.accent : colors.surface3,
+                                borderColor: active ? colors.accent : colors.border,
+                              },
+                            ]}
+                            onPress={() => setPendingRole(role)}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.roleBtnText, {
+                              color: active ? (isDark ? '#080C16' : '#fff') : colors.textSecondary,
+                              fontFamily: fontFamily.bodyMedium,
+                            }]}>
+                              {ROLE_LABEL[role]}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.addBtn, { backgroundColor: canAddPending ? colors.accent + '22' : colors.surface3, borderColor: canAddPending ? colors.accent : colors.border }]}
+                      onPress={handleAddOwner}
+                      disabled={!canAddPending}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={16} color={canAddPending ? colors.accent : colors.textTertiary} />
+                      <Text style={[styles.addBtnText, { color: canAddPending ? colors.accent : colors.textTertiary, fontFamily: fontFamily.bodyMedium }]}>
+                        Add
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {/* Submit */}
@@ -606,40 +678,85 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 1,
   },
-  // Owners
-  ownerRow: {
+  // Owner chips (preview)
+  ownerChips: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  ownerChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 10,
-    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  ownerFields: {
+  ownerChipAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ownerChipAvatarText: {
+    fontSize: 13,
+  },
+  ownerChipInfo: {
     flex: 1,
   },
-  ownerInput: {
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+  ownerChipAlias: {
     fontSize: 14,
+    marginBottom: 1,
   },
-  ownerInputTop: {
+  ownerChipRole: {
+    fontSize: 11,
+  },
+  // Add owner form
+  addOwnerForm: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    gap: 0,
+  },
+  addOwnerFormLabel: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  addOwnerInput: {
+    paddingVertical: 10,
+    paddingHorizontal: 2,
+    fontSize: 14,
     borderBottomWidth: 1,
+    marginBottom: 10,
   },
-  removeBtn: {
-    paddingHorizontal: 12,
+  rolePicker: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
   },
-  addOwnerBtn: {
+  roleBtn: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  roleBtnText: {
+    fontSize: 12,
+  },
+  addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderStyle: 'dashed',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
-  addOwnerText: {
+  addBtnText: {
     fontSize: 14,
   },
   submitBtn: {

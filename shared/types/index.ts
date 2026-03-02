@@ -1,5 +1,30 @@
 // DTOs shared between frontend and backend
 
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+export const TransactionType = {
+  ONE_TIME: "ONE_TIME",
+  RECURRING: "RECURRING",
+} as const;
+export type TransactionType = (typeof TransactionType)[keyof typeof TransactionType];
+
+export const AccountRole = {
+  OWNER: "OWNER",
+  EDITOR: "EDITOR",
+  VIEWER: "VIEWER",
+} as const;
+export type AccountRole = (typeof AccountRole)[keyof typeof AccountRole];
+
+export const RecurringFrequency = {
+  WEEKLY: "WEEKLY",
+  BIWEEKLY: "BIWEEKLY",
+  MONTHLY: "MONTHLY",
+  YEARLY: "YEARLY",
+} as const;
+export type RecurringFrequency = (typeof RecurringFrequency)[keyof typeof RecurringFrequency];
+
+// ─── DTOs ─────────────────────────────────────────────────────────────────────
+
 export interface TransactionDto {
   id: string;
   accountId: string;
@@ -7,13 +32,15 @@ export interface TransactionDto {
   amount: number; // cents
   description: string;
   date: string; // ISO string
-  type: "ONE_TIME" | "RECURRING";
+  type: TransactionType;
   category: {
     id: string;
     name: string;
     icon: string;
     color: string;
   };
+  addedByUserId: string | null;
+  addedByAlias: string | null; // null = added by current user or unknown
 }
 
 export interface TransactionListResponse {
@@ -48,7 +75,15 @@ export interface AccountDto {
   id: string;
   name: string;
   currency: string;
-  role: "OWNER" | "EDITOR" | "VIEWER";
+  role: AccountRole;
+  alias: string | null; // current user's alias in this account
+}
+
+export interface AccountMemberDto {
+  userId: string;
+  email: string;
+  role: AccountRole;
+  alias: string | null;
 }
 
 export interface AccountListResponse {
@@ -94,7 +129,7 @@ export interface UpcomingBillDto {
   color: string;
   amount: number; // cents, positive
   dueDay: number; // 1-31
-  frequency: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "YEARLY";
+  frequency: RecurringFrequency;
 }
 
 export interface UpcomingBillsResponse {

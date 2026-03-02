@@ -35,10 +35,11 @@ export const create = async (
   try {
     const { userId } = getAuth(req);
     const { accountId, ...data } = req.body;
-    await accountsService.verifyAccountMembership(userId!, accountId);
+    const { userId: internalUserId } = await accountsService.verifyAccountMembership(userId!, accountId);
     const transaction = await transactionsService.createTransaction({
       accountId,
       ...data,
+      addedByUserId: internalUserId,
     });
     res.status(201).json(transaction);
   } catch (error) {

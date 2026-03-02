@@ -1,3 +1,4 @@
+import { TransactionType } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -26,11 +27,12 @@ export const listTransactions = async (params: ListTransactionsParams) => {
     ...(categoryId && { categoryId }),
   };
 
-  const [transactions, total, spendingAgg, budgetResult] = await Promise.all([
+  const [transactions, total, spendingAgg, budgetResult, members] = await Promise.all([
     prisma.transaction.findMany({
       where,
       include: {
         category: { select: { id: true, name: true, icon: true, color: true } },
+        addedBy: { select: { id: true } },
       },
       orderBy: { date: "desc" },
       skip: (page - 1) * limit,
@@ -49,10 +51,16 @@ export const listTransactions = async (params: ListTransactionsParams) => {
         year: targetYear,
       },
     }),
+    prisma.accountMember.findMany({
+      where: { accountId },
+      select: { userId: true, alias: true },
+    }),
   ]);
 
   const totalSpent = Math.abs(spendingAgg._sum.amount ?? 0);
   const budget = budgetResult?.amount ?? 0;
+
+  const aliasMap = new Map(members.map((m) => [m.userId, m.alias]));
 
   return {
     data: transactions.map((t) => ({
@@ -64,6 +72,8 @@ export const listTransactions = async (params: ListTransactionsParams) => {
       date: t.date.toISOString(),
       type: t.type,
       category: t.category,
+      addedByUserId: t.addedByUserId ?? null,
+      addedByAlias: t.addedByUserId ? (aliasMap.get(t.addedByUserId) ?? null) : null,
     })),
     pagination: {
       page,
@@ -85,15 +95,27 @@ export const createTransaction = async (data: {
   amount: number;
   description: string;
   date: Date;
-  type: "ONE_TIME" | "RECURRING";
+  type: TransactionType;
   scheduleId?: string;
+  addedByUserId?: string;
 }) => {
   const transaction = await prisma.transaction.create({
     data,
     include: {
       category: { select: { id: true, name: true, icon: true, color: true } },
+      addedBy: { select: { id: true } },
     },
   });
+
+  // Fetch alias for the creator in this account
+  let addedByAlias: string | null = null;
+  if (transaction.addedByUserId) {
+    const member = await prisma.accountMember.findUnique({
+      where: { userId_accountId: { userId: transaction.addedByUserId, accountId: data.accountId } },
+      select: { alias: true },
+    });
+    addedByAlias = member?.alias ?? null;
+  }
 
   return {
     id: transaction.id,
@@ -104,6 +126,8 @@ export const createTransaction = async (data: {
     date: transaction.date.toISOString(),
     type: transaction.type,
     category: transaction.category,
+    addedByUserId: transaction.addedByUserId ?? null,
+    addedByAlias,
   };
 };
 
@@ -115,7 +139,7 @@ export const updateTransaction = async (
     amount: number;
     description: string;
     date: Date;
-    type: "ONE_TIME" | "RECURRING";
+    type: TransactionType;
     scheduleId: string;
   }>,
 ) => {
@@ -135,6 +159,15 @@ export const updateTransaction = async (
     },
   });
 
+  let addedByAlias: string | null = null;
+  if (transaction.addedByUserId) {
+    const member = await prisma.accountMember.findUnique({
+      where: { userId_accountId: { userId: transaction.addedByUserId, accountId } },
+      select: { alias: true },
+    });
+    addedByAlias = member?.alias ?? null;
+  }
+
   return {
     id: transaction.id,
     accountId: transaction.accountId,
@@ -144,6 +177,8 @@ export const updateTransaction = async (
     date: transaction.date.toISOString(),
     type: transaction.type,
     category: transaction.category,
+    addedByUserId: transaction.addedByUserId ?? null,
+    addedByAlias,
   };
 };
 

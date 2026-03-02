@@ -19,12 +19,13 @@ export const listAccounts = async (clerkId: string) => {
     name: m.account.name,
     currency: m.account.currency,
     role: m.role,
+    alias: m.alias ?? null,
   }));
 };
 
 export const createAccount = async (
   clerkId: string,
-  data: { name: string; currency?: string },
+  data: { name: string; currency?: string; alias?: string },
 ) => {
   const user = await prisma.user.findUnique({ where: { clerkId } });
   if (!user) throw new AppError(404, "User not found");
@@ -34,12 +35,39 @@ export const createAccount = async (
       name: data.name,
       currency: data.currency ?? "USD",
       members: {
-        create: { userId: user.id, role: "OWNER" },
+        create: { userId: user.id, role: AccountRole.OWNER, alias: data.alias ?? null },
       },
     },
   });
 
-  return { id: account.id, name: account.name, currency: account.currency, role: "OWNER" };
+  return { id: account.id, name: account.name, currency: account.currency, role: AccountRole.OWNER, alias: data.alias ?? null };
+};
+
+export const addMember = async (
+  clerkId: string,
+  accountId: string,
+  data: { email: string; alias?: string; role?: AccountRole },
+) => {
+  await verifyAccountMembership(clerkId, accountId, [AccountRole.OWNER]);
+
+  const targetUser = await prisma.user.findUnique({ where: { email: data.email } });
+  if (!targetUser) throw new AppError(404, "User with that email not found");
+
+  const existing = await prisma.accountMember.findUnique({
+    where: { userId_accountId: { userId: targetUser.id, accountId } },
+  });
+  if (existing) throw new AppError(409, "User is already a member of this account");
+
+  const member = await prisma.accountMember.create({
+    data: {
+      userId: targetUser.id,
+      accountId,
+      role: data.role ?? AccountRole.VIEWER,
+      alias: data.alias ?? null,
+    },
+  });
+
+  return { userId: targetUser.id, email: targetUser.email, role: member.role, alias: member.alias ?? null };
 };
 
 export const updateAccount = async (
@@ -47,7 +75,7 @@ export const updateAccount = async (
   accountId: string,
   data: { name?: string; currency?: string },
 ) => {
-  await verifyAccountMembership(clerkId, accountId, ["OWNER"]);
+  await verifyAccountMembership(clerkId, accountId, [AccountRole.OWNER]);
 
   const account = await prisma.account.update({
     where: { id: accountId },
@@ -58,7 +86,7 @@ export const updateAccount = async (
 };
 
 export const deleteAccount = async (clerkId: string, accountId: string) => {
-  await verifyAccountMembership(clerkId, accountId, ["OWNER"]);
+  await verifyAccountMembership(clerkId, accountId, [AccountRole.OWNER]);
   await prisma.account.delete({ where: { id: accountId } });
 };
 

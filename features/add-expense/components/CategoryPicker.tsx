@@ -5,14 +5,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ComponentProps } from 'react';
+import type { CategoryDto } from '@shared/types/index';
 
-interface Category {
+interface HardcodedCategory {
   key: string;
   icon: ComponentProps<typeof Ionicons>['name'];
   color: string;
 }
 
-const CATEGORIES: Category[] = [
+const HARDCODED_CATEGORIES: HardcodedCategory[] = [
   { key: 'housing',       icon: 'home-outline',            color: '#FF6B35' },
   { key: 'food',          icon: 'restaurant-outline',      color: '#4CAF50' },
   { key: 'shopping',      icon: 'bag-outline',             color: '#E91E8C' },
@@ -31,13 +32,16 @@ const CATEGORIES: Category[] = [
 
 interface CategoryPickerProps {
   selectedCategory: string;
-  onSelect: (key: string) => void;
+  onSelect: (id: string) => void;
+  categories?: CategoryDto[];
 }
 
-const CategoryPicker = ({ selectedCategory, onSelect }: CategoryPickerProps) => {
+const CategoryPicker = ({ selectedCategory, onSelect, categories }: CategoryPickerProps) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const fontFamily = useFontFamily();
+
+  const useApiCategories = categories && categories.length > 0;
 
   return (
     <ScrollView
@@ -46,36 +50,68 @@ const CategoryPicker = ({ selectedCategory, onSelect }: CategoryPickerProps) => 
       contentContainerStyle={styles.list}
       nestedScrollEnabled
     >
-      {CATEGORIES.map(({ key, icon, color }) => {
-        const isSelected = selectedCategory === key;
-        return (
-          <TouchableOpacity
-            key={key}
-            style={[
-              styles.card,
-              {
-                backgroundColor: isSelected ? colors.accent + '1A' : colors.surface2,
-                borderColor: isSelected ? colors.accent : colors.border,
-              },
-            ]}
-            onPress={() => onSelect(key)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconCircle, { backgroundColor: color + '22' }]}>
-              <Ionicons name={icon} size={22} color={color} />
-            </View>
-            <Text
-              numberOfLines={1}
-              style={[
-                styles.cardLabel,
-                { color: isSelected ? colors.accent : colors.textSecondary, fontFamily: fontFamily.body },
-              ]}
-            >
-              {t(`addExpense.categories.${key}`)}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+      {useApiCategories
+        ? categories!.map((cat) => {
+            const isSelected = selectedCategory === cat.id;
+            const iconName = (cat.icon ?? 'receipt-outline') as ComponentProps<typeof Ionicons>['name'];
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: isSelected ? colors.accent + '1A' : colors.surface2,
+                    borderColor: isSelected ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => onSelect(cat.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: (cat.color ?? '#8E8E93') + '22' }]}>
+                  <Ionicons name={iconName} size={22} color={cat.color ?? '#8E8E93'} />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.cardLabel,
+                    { color: isSelected ? colors.accent : colors.textSecondary, fontFamily: fontFamily.body },
+                  ]}
+                >
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })
+        : HARDCODED_CATEGORIES.map(({ key, icon, color }) => {
+            const isSelected = selectedCategory === key;
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: isSelected ? colors.accent + '1A' : colors.surface2,
+                    borderColor: isSelected ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => onSelect(key)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: color + '22' }]}>
+                  <Ionicons name={icon} size={22} color={color} />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.cardLabel,
+                    { color: isSelected ? colors.accent : colors.textSecondary, fontFamily: fontFamily.body },
+                  ]}
+                >
+                  {t(`addExpense.categories.${key}`)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
     </ScrollView>
   );
 };

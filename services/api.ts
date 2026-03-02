@@ -1,6 +1,4 @@
-const BASE_URL = __DEV__
-  ? "http://localhost:3000/api"
-  : "https://api.spendy.app/api";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000/api";
 
 let getAuthToken: (() => Promise<string | null>) | null = null;
 

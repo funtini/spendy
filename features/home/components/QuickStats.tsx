@@ -1,21 +1,30 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
 import { SparkLine } from '@/features/shared';
-
-const MONTHLY_DATA = [980, 1100, 1050, 1380, 1200, 1320, 1250];
-const BUDGET = 2000;
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useDashboard, useMonthlyTrend } from '@/hooks/queries';
 
 export const QuickStats: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
+  const { selectedAccountId } = useSelectedAccount();
 
-  const currentMonthSpending = 1450;
-  const monthlyAverage = 1738;
-  const budgetUsed = Math.round((currentMonthSpending / BUDGET) * 100);
-  const isOverAvg = currentMonthSpending > monthlyAverage;
+  const { data: dashboard, isLoading: dashLoading } = useDashboard(selectedAccountId);
+  const { data: trend } = useMonthlyTrend(selectedAccountId);
+
+  const currentMonthSpending = (dashboard?.currentMonthSpending ?? 0) / 100;
+  const monthlyAverage = (dashboard?.monthlyAverage ?? 0) / 100;
+  const budget = 0; // Budget endpoint is optional (Step 8), defaults to 0
+  const budgetUsed = budget > 0 ? Math.round((currentMonthSpending / budget) * 100) : 0;
+
+  const sparkData = trend?.map((t) => t.amount / 100) ?? [0];
+
+  const avgDiff = monthlyAverage > 0
+    ? Math.round(((currentMonthSpending - monthlyAverage) / monthlyAverage) * 100)
+    : 0;
 
   return (
     <View style={styles.row}>
@@ -27,27 +36,38 @@ export const QuickStats: React.FC = () => {
         <Text style={[styles.cardLabel, { color: colors.textTertiary, fontFamily: ff.bodyMedium }]}>
           THIS MONTH
         </Text>
-        <Text style={[styles.cardAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
-          €1,450
-        </Text>
-        <Text style={[styles.cardSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
-          of €{BUDGET.toLocaleString()} budget
-        </Text>
-
-        <View style={[styles.badge, {
-          backgroundColor: colors.error + '22',
-        }]}>
-          <Text style={[styles.badgeText, { color: colors.error, fontFamily: ff.bodyBold }]}>
-            ▲ +8%
+        {dashLoading ? (
+          <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+        ) : (
+          <Text style={[styles.cardAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
+            €{currentMonthSpending.toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </Text>
-        </View>
+        )}
+        <Text style={[styles.cardSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
+          {budget > 0 ? `of €${budget.toLocaleString()} budget` : 'this month'}
+        </Text>
 
-        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-          <View style={[styles.progressFill, {
-            width: `${Math.min(budgetUsed, 100)}%` as any,
-            backgroundColor: colors.accent,
-          }]} />
-        </View>
+        {avgDiff !== 0 && (
+          <View style={[styles.badge, {
+            backgroundColor: avgDiff > 0 ? colors.error + '22' : colors.accent + '22',
+          }]}>
+            <Text style={[styles.badgeText, {
+              color: avgDiff > 0 ? colors.error : colors.accent,
+              fontFamily: ff.bodyBold,
+            }]}>
+              {avgDiff > 0 ? '▲' : '▼'} {avgDiff > 0 ? '+' : ''}{avgDiff}%
+            </Text>
+          </View>
+        )}
+
+        {budget > 0 && (
+          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+            <View style={[styles.progressFill, {
+              width: `${Math.min(budgetUsed, 100)}%` as any,
+              backgroundColor: colors.accent,
+            }]} />
+          </View>
+        )}
       </View>
 
       {/* Monthly Avg card */}
@@ -58,23 +78,29 @@ export const QuickStats: React.FC = () => {
         <Text style={[styles.cardLabel, { color: colors.textTertiary, fontFamily: ff.bodyMedium }]}>
           MONTHLY AVG
         </Text>
-        <Text style={[styles.cardAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
-          €1,738
-        </Text>
+        {dashLoading ? (
+          <ActivityIndicator size="small" color={colors.secondary} style={styles.loader} />
+        ) : (
+          <Text style={[styles.cardAmount, { color: colors.text, fontFamily: ff.headingBold }]}>
+            €{monthlyAverage.toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </Text>
+        )}
         <Text style={[styles.cardSub, { color: colors.textTertiary, fontFamily: ff.body }]}>
           last 6 months
         </Text>
 
-        <View style={[styles.badge, {
-          backgroundColor: colors.secondary + '22',
-        }]}>
-          <Text style={[styles.badgeText, { color: colors.secondary, fontFamily: ff.bodyBold }]}>
-            ▼ −16%
-          </Text>
-        </View>
+        {avgDiff !== 0 && (
+          <View style={[styles.badge, {
+            backgroundColor: colors.secondary + '22',
+          }]}>
+            <Text style={[styles.badgeText, { color: colors.secondary, fontFamily: ff.bodyBold }]}>
+              {avgDiff < 0 ? '▼' : '▲'} {avgDiff < 0 ? '' : '+'}{-avgDiff}%
+            </Text>
+          </View>
+        )}
 
         <View style={styles.sparkContainer}>
-          <SparkLine data={MONTHLY_DATA} width={100} height={34} color={colors.secondary} gradientId="avgGradient" />
+          <SparkLine data={sparkData} width={100} height={34} color={colors.secondary} gradientId="avgGradient" />
         </View>
       </View>
     </View>
@@ -130,5 +156,10 @@ const styles = StyleSheet.create({
   },
   sparkContainer: {
     marginTop: 8,
+  },
+  loader: {
+    height: 30,
+    marginBottom: 3,
+    alignSelf: 'flex-start',
   },
 });

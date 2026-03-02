@@ -1,58 +1,79 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useStatistics } from '@/hooks/queries';
 
-const WEEK_DATA = [
-  { key: 'M', value: 62, height: 62 },
-  { key: 'T', value: 45, height: 45 },
-  { key: 'W', value: 78, height: 78 },
-  { key: 'T', value: 35, height: 35 },
-  { key: 'F', value: 90, height: 90 },
-  { key: 'S', value: 55, height: 55 },
-  { key: 'S', value: 40, height: 40 },
-];
+const DAY_SHORT: Record<string, string> = {
+  Monday: 'M',
+  Tuesday: 'T',
+  Wednesday: 'W',
+  Thursday: 'T',
+  Friday: 'F',
+  Saturday: 'S',
+  Sunday: 'S',
+};
 
 export const WeeklyTrend: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
+  const { selectedAccountId } = useSelectedAccount();
+  const { data, isLoading } = useStatistics(selectedAccountId);
+
+  const weeklyTrend = data?.weeklyTrend ?? [];
+  const maxAmount = Math.max(...weeklyTrend.map((d) => d.amount), 1);
+  const peakDay = weeklyTrend.reduce((prev, curr) => (curr.amount > prev.amount ? curr : prev), weeklyTrend[0]);
+  const avgAmount = weeklyTrend.length > 0
+    ? weeklyTrend.reduce((sum, d) => sum + d.amount, 0) / weeklyTrend.length
+    : 0;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.title, { color: colors.text, fontFamily: ff.heading }]}>
         Weekly Trend
       </Text>
-      <View style={styles.chart}>
-        {WEEK_DATA.map((day, i) => (
-          <View key={i} style={styles.barColumn}>
-            <View style={[styles.barTrack, { backgroundColor: colors.surface3 }]}>
-              <View
-                style={[
-                  styles.bar,
-                  {
-                    height: `${day.height}%` as any,
-                    backgroundColor: i === 4
-                      ? colors.accent
-                      : `rgba(42,109,181,${0.2 + day.value / 200})`,
-                  },
-                ]}
-              />
-            </View>
-            <Text style={[styles.dayLabel, { color: colors.textTertiary, fontFamily: ff.mono }]}>
-              {day.key}
+      {isLoading ? (
+        <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+      ) : (
+        <>
+          <View style={styles.chart}>
+            {weeklyTrend.map((day, i) => {
+              const heightPct = maxAmount > 0 ? (day.amount / maxAmount) * 100 : 0;
+              const isPeak = day.amount === maxAmount && maxAmount > 0;
+              return (
+                <View key={i} style={styles.barColumn}>
+                  <View style={[styles.barTrack, { backgroundColor: colors.surface3 }]}>
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          height: `${heightPct}%` as any,
+                          backgroundColor: isPeak
+                            ? colors.accent
+                            : `rgba(42,109,181,${0.2 + heightPct / 200})`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.dayLabel, { color: colors.textTertiary, fontFamily: ff.mono }]}>
+                    {DAY_SHORT[day.day] ?? day.day[0]}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+          <View style={styles.footer}>
+            <Text style={[styles.footerText, { color: colors.textTertiary, fontFamily: ff.body }]}>
+              {peakDay ? `Peak: ${peakDay.day} €${(peakDay.amount / 100).toFixed(0)}` : 'No data'}
+            </Text>
+            <Text style={[styles.footerAccent, { color: colors.accent, fontFamily: ff.bodyBold }]}>
+              Avg: €{(avgAmount / 100).toFixed(0)}/day
             </Text>
           </View>
-        ))}
-      </View>
-      <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: colors.textTertiary, fontFamily: ff.body }]}>
-          Peak: Friday €90
-        </Text>
-        <Text style={[styles.footerAccent, { color: colors.accent, fontFamily: ff.bodyBold }]}>
-          Avg: €63/day
-        </Text>
-      </View>
+        </>
+      )}
     </View>
   );
 };
@@ -106,5 +127,8 @@ const styles = StyleSheet.create({
   },
   footerAccent: {
     fontSize: 11,
+  },
+  loader: {
+    height: 82,
   },
 });

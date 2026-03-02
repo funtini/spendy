@@ -34,7 +34,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  accountMemberships AccountMember[]
+  accountMemberships  AccountMember[]
+  addedTransactions   Transaction[]   @relation("TransactionAddedBy")
 
   @@map("users")
 }
@@ -60,6 +61,7 @@ model AccountMember {
   userId    String      @map("user_id")
   accountId String      @map("account_id")
   role      AccountRole @default(OWNER)
+  alias     String?     // custom display name for this member in this account
   createdAt DateTime    @default(now()) @map("created_at")
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -87,20 +89,22 @@ model Category {
 }
 
 model Transaction {
-  id          String          @id @default(cuid())
-  accountId   String          @map("account_id")
-  categoryId  String          @map("category_id")
-  amount      Int             // cents, negative = expense, positive = income
-  description String
-  date        DateTime
-  type        TransactionType @default(ONE_TIME)
-  scheduleId  String?         @map("schedule_id")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id            String          @id @default(cuid())
+  accountId     String          @map("account_id")
+  categoryId    String          @map("category_id")
+  amount        Int             // cents, negative = expense, positive = income
+  description   String
+  date          DateTime
+  type          TransactionType @default(ONE_TIME)
+  scheduleId    String?         @map("schedule_id")
+  addedByUserId String?         @map("added_by_user_id")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
 
   account  Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
   category Category           @relation(fields: [categoryId], references: [id])
   schedule RecurringSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  addedBy  User?              @relation("TransactionAddedBy", fields: [addedByUserId], references: [id], onDelete: SetNull)
 
   @@index([accountId, date])
   @@map("transactions")

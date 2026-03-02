@@ -1,30 +1,23 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useFontFamily } from '@/hooks/useFontFamily';
-
-interface BarData {
-  label: string;
-  value: number;
-  isCurrent?: boolean;
-  isHigh?: boolean;
-}
-
-const MONTHLY_DATA: BarData[] = [
-  { label: 'Sep', value: 65 },
-  { label: 'Oct', value: 76 },
-  { label: 'Nov', value: 52 },
-  { label: 'Dec', value: 100, isHigh: true },
-  { label: 'Jan', value: 70 },
-  { label: 'Feb', value: 57, isCurrent: true },
-];
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useMonthlyTrend } from '@/hooks/queries';
 
 const CHART_HEIGHT = 96;
 
 export const BarChart: React.FC = () => {
   const colors = useThemeColors();
   const ff = useFontFamily();
+  const { selectedAccountId } = useSelectedAccount();
+  const { data: trend, isLoading } = useMonthlyTrend(selectedAccountId);
+
+  const now = new Date();
+
+  const chartData = trend ?? [];
+  const maxAmount = Math.max(...chartData.map((d) => d.amount), 1);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -36,32 +29,41 @@ export const BarChart: React.FC = () => {
           6 months
         </Text>
       </View>
-      <View style={[styles.chart, { height: CHART_HEIGHT + 24 }]}>
-        {MONTHLY_DATA.map((item, index) => {
-          const barH = (item.value / 100) * CHART_HEIGHT;
-          const barColor = item.isCurrent
-            ? colors.accent
-            : item.isHigh
-            ? colors.warning
-            : colors.surface3;
-          return (
-            <View key={index} style={styles.barGroup}>
-              <Text style={[styles.valueLabel, {
-                color: item.isCurrent ? colors.accent : 'transparent',
-                fontFamily: ff.mono,
-              }]}>
-                {item.isCurrent ? '€1.5k' : '.'}
-              </Text>
-              <View style={[styles.barTrack, { height: CHART_HEIGHT, backgroundColor: colors.surface2 }]}>
-                <View style={[styles.bar, { height: barH, backgroundColor: barColor }]} />
+      {isLoading ? (
+        <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+      ) : (
+        <View style={[styles.chart, { height: CHART_HEIGHT + 24 }]}>
+          {chartData.map((item, index) => {
+            const barH = (item.amount / maxAmount) * CHART_HEIGHT;
+            const isCurrent = item.year === now.getFullYear() && item.month === now.toLocaleString('en', { month: 'short' });
+            const isHigh = item.amount === maxAmount && maxAmount > 0;
+            const barColor = isCurrent
+              ? colors.accent
+              : isHigh
+              ? colors.warning
+              : colors.surface3;
+            const amountK = item.amount >= 100000
+              ? `€${(item.amount / 100000).toFixed(1)}k`
+              : `€${(item.amount / 100).toFixed(0)}`;
+            return (
+              <View key={index} style={styles.barGroup}>
+                <Text style={[styles.valueLabel, {
+                  color: isCurrent ? colors.accent : 'transparent',
+                  fontFamily: ff.mono,
+                }]}>
+                  {isCurrent ? amountK : '.'}
+                </Text>
+                <View style={[styles.barTrack, { height: CHART_HEIGHT, backgroundColor: colors.surface2 }]}>
+                  <View style={[styles.bar, { height: barH, backgroundColor: barColor }]} />
+                </View>
+                <Text style={[styles.barLabel, { color: isCurrent ? colors.accent : colors.textTertiary, fontFamily: ff.mono }]}>
+                  {item.month}
+                </Text>
               </View>
-              <Text style={[styles.barLabel, { color: item.isCurrent ? colors.accent : colors.textTertiary, fontFamily: ff.mono }]}>
-                {item.label}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 };
@@ -115,5 +117,8 @@ const styles = StyleSheet.create({
   barLabel: {
     fontSize: 9,
     marginTop: 4,
+  },
+  loader: {
+    height: CHART_HEIGHT + 24,
   },
 });

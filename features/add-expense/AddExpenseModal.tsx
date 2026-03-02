@@ -1,6 +1,8 @@
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFontFamily } from '@/hooks/useFontFamily';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useSelectedAccount } from '@/contexts/AccountContext';
+import { useAccounts, useCreateTransaction, useCategories } from '@/hooks/queries';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, {
@@ -31,13 +33,25 @@ import { Account, AccountPicker, GRADIENT_PRESETS } from '@/features/home';
 import CategoryPicker from './components/CategoryPicker';
 import RecurrenceSection from './components/RecurrenceSection';
 import TypeToggle from './components/TypeToggle';
+import { TransactionType } from '@shared/types';
+import type { AccountDto, AccountRole } from '@shared/types';
+
+const gradientFromId = (id: string) =>
+  GRADIENT_PRESETS[id.charCodeAt(0) % GRADIENT_PRESETS.length];
+
+const dtoToAccount = (dto: AccountDto): Account => ({
+  id: dto.id,
+  name: dto.name,
+  gradient: gradientFromId(dto.id),
+  owners: [{ email: '', alias: dto.alias ?? dto.role, role: dto.role as AccountRole, isCurrentUser: true }],
+});
 
 interface ExpenseData {
   description: string;
   amount: string;
   type: 'one-time' | 'fixed';
   date: Date;
-  category: string;
+  categoryId: string;
 }
 
 export interface AddExpenseModalRef {
@@ -50,20 +64,11 @@ const EMPTY_EXPENSE: ExpenseData = {
   amount: '',
   type: 'one-time',
   date: new Date(),
-  category: '',
+  categoryId: '',
 };
 
 const SPRING_CONTENT = { friction: 9, tension: 55 } as const;
 const SPRING_TOGGLE = { friction: 8, tension: 60 } as const;
-
-const DEFAULT_ACCOUNTS: Account[] = [
-  {
-    id: 'personal',
-    name: 'Personal',
-    gradient: GRADIENT_PRESETS[0],
-    owners: [{ email: '', alias: 'Me' }],
-  },
-];
 
 const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
   const { t } = useTranslation();
@@ -74,6 +79,10 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
   const { height: screenHeight } = useWindowDimensions();
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const { selectedAccountId: contextAccountId } = useSelectedAccount();
+  const { data: accountsData } = useAccounts();
+  const accounts: Account[] = (accountsData?.data ?? []).map(dtoToAccount);
+
   const [visible, setVisible] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
@@ -81,15 +90,23 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const typeAnim = useRef(new Animated.Value(0)).current;
 
-  const [accounts, setAccounts] = useState<Account[]>(DEFAULT_ACCOUNTS);
-  const [selectedAccountId, setSelectedAccountId] = useState('personal');
-
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [expenseData, setExpenseData] = useState<ExpenseData>(EMPTY_EXPENSE);
   const [freq, setFreq] = useState<'monthly' | 'custom'>('monthly');
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [notifyMe, setNotifyMe] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [focusedInput, setFocusedInput] = useState<'description' | 'amount' | null>(null);
+
+  const { data: categoriesData } = useCategories(selectedAccountId || contextAccountId);
+  const createTransaction = useCreateTransaction(selectedAccountId || contextAccountId);
+
+  // Sync account selection with context when modal opens
+  useEffect(() => {
+    if (visible && contextAccountId && !selectedAccountId) {
+      setSelectedAccountId(contextAccountId);
+    }
+  }, [visible, contextAccountId, selectedAccountId]);
 
   const { maxScrollHeight, scrollEnabled } = useMemo(() => {
     const maxSheetHeight = screenHeight * 0.92;
@@ -112,6 +129,7 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
     typeAnim.setValue(0);
     setScrollContentHeight(0);
     animatedHeight.setValue(0);
+    setSelectedAccountId('');
   }, [typeAnim, animatedHeight]);
 
   const handleClose = useCallback(() => {
@@ -145,15 +163,31 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
     }
   }, [typeAnim]);
 
-  const handleSave = useCallback(() => {
-    if (!expenseData.description || !expenseData.amount || !expenseData.category) {
+  const handleSave = useCallback(async () => {
+    const accountId = selectedAccountId || contextAccountId;
+    if (!expenseData.description || !expenseData.amount || !expenseData.categoryId) {
       Alert.alert(t('addExpense.errors.missingTitle'), t('addExpense.errors.missingBody'));
       return;
     }
-    Alert.alert(t('addExpense.success.title'), t('addExpense.success.body'), [
-      { text: t('common.done'), onPress: handleClose },
-    ]);
-  }, [expenseData, handleClose, t]);
+    if (!accountId) {
+      Alert.alert('No account', 'Please select an account first.');
+      return;
+    }
+    try {
+      const amountCents = Math.round(parseFloat(expenseData.amount) * 100) * -1;
+      await createTransaction.mutateAsync({
+        accountId,
+        description: expenseData.description,
+        amount: amountCents,
+        categoryId: expenseData.categoryId,
+        date: expenseData.date.toISOString(),
+        type: expenseData.type === 'fixed' ? TransactionType.RECURRING : TransactionType.ONE_TIME,
+      });
+      handleClose();
+    } catch {
+      Alert.alert('Error', 'Failed to save transaction. Please try again.');
+    }
+  }, [expenseData, selectedAccountId, contextAccountId, createTransaction, handleClose, t]);
 
   const handleFreqChange = useCallback((value: 'monthly' | 'custom') => {
     setFreq(value);
@@ -172,6 +206,8 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
 
   const focusedBorder = colors.accent + '66';
   const defaultBorder = colors.border;
+
+  const currentAccountId = selectedAccountId || contextAccountId || '';
 
   return (
     <Modal
@@ -291,7 +327,7 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
                   </Text>
                   <AccountPicker
                     accounts={accounts}
-                    selectedAccountId={selectedAccountId}
+                    selectedAccountId={currentAccountId}
                     variant="input"
                     onSelect={setSelectedAccountId}
                   />
@@ -330,8 +366,9 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
                   {t('addExpense.category')}
                 </Text>
                 <CategoryPicker
-                  selectedCategory={expenseData.category}
-                  onSelect={(key) => setExpenseData((prev) => ({ ...prev, category: key }))}
+                  selectedCategory={expenseData.categoryId}
+                  onSelect={(id) => setExpenseData((prev) => ({ ...prev, categoryId: id }))}
+                  categories={categoriesData?.data}
                 />
               </View>
 
@@ -373,13 +410,14 @@ const AddExpenseModal = forwardRef<AddExpenseModalRef>((_, ref) => {
             <TouchableOpacity
               onPress={handleSave}
               activeOpacity={0.85}
-              style={[styles.submitBtn, { backgroundColor: colors.accent }]}
+              disabled={createTransaction.isPending}
+              style={[styles.submitBtn, { backgroundColor: colors.accent, opacity: createTransaction.isPending ? 0.6 : 1 }]}
             >
               <Text style={[styles.submitText, {
                 fontFamily: fontFamily.bodyBold,
                 color: isDark ? '#080C16' : '#FFFFFF',
               }]}>
-                {t('addExpense.addButton')}
+                {createTransaction.isPending ? 'Saving…' : t('addExpense.addButton')}
               </Text>
             </TouchableOpacity>
           </View>

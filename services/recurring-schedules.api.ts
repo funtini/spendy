@@ -1,11 +1,12 @@
 import { api } from "./api";
+import type { RecurringFrequency } from "@shared/types";
 
 export interface RecurringScheduleDto {
   id: string;
   accountId: string;
   name: string;
   amount: number; // cents
-  frequency: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "YEARLY";
+  frequency: RecurringFrequency;
   dueDay: number;
   categoryId: string;
   isActive: boolean;
@@ -22,7 +23,7 @@ export const createRecurringSchedule = (data: {
   accountId: string;
   name: string;
   amount: number;
-  frequency: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "YEARLY";
+  frequency: RecurringFrequency;
   dueDay: number;
   categoryId: string;
 }) => api<RecurringScheduleDto>("/recurring-schedules", { method: "POST", body: data });
@@ -33,7 +34,7 @@ export const updateRecurringSchedule = (
     accountId: string;
     name?: string;
     amount?: number;
-    frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "YEARLY";
+    frequency?: RecurringFrequency;
     dueDay?: number;
     categoryId?: string;
     isActive?: boolean;
