@@ -27,9 +27,12 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { AccountProvider } from '@/contexts/AccountContext';
+import { queryClient, persister } from '@/lib/queryClient';
 import '../lib/i18n';
 
 function AppContent() {
@@ -56,27 +59,31 @@ function AppContent() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-        <SafeAreaProvider>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="transactions" options={{ headerShown: false }} />
-            <Stack.Screen name="profile" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-        </SafeAreaProvider>
-      </NavigationThemeProvider>
-    </GestureHandlerRootView>
+    <AccountProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+          <SafeAreaProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="transactions" options={{ headerShown: false }} />
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
+            </Stack>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </SafeAreaProvider>
+        </NavigationThemeProvider>
+      </GestureHandlerRootView>
+    </AccountProvider>
   );
 }
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AppContent />
-      </LanguageProvider>
-    </ThemeProvider>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AppContent />
+        </LanguageProvider>
+      </ThemeProvider>
+    </PersistQueryClientProvider>
   );
 }

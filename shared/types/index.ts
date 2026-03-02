@@ -101,3 +101,9 @@ export interface UpcomingBillsResponse {
   data: UpcomingBillDto[];
   total: number; // cents
 }
+
+export interface MonthlyTrendDto {
+  month: string; // e.g. "Jan"
+  year: number;
+  amount: number; // cents, positive
+}

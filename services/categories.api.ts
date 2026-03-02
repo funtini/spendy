@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { CategoryListResponse, CategoryDto } from "@shared/types/index";
+import type { CategoryListResponse, CategoryDto } from "@shared/types";
 
 export const listCategories = (accountId: string) =>
   api<CategoryListResponse>("/categories", { params: { accountId } });

@@ -2,7 +2,7 @@ import { api } from "./api";
 import type {
   TransactionListResponse,
   TransactionDto,
-} from "@shared/types/index";
+} from "@shared/types";
 
 interface ListTransactionsParams {
   accountId: string;

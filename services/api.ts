@@ -62,5 +62,5 @@ export const api = async <T>(
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  return await response.json() as Promise<T>;
 };
