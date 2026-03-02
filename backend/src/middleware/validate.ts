@@ -13,6 +13,10 @@ export const validate =
       next(new AppError(400, message));
       return;
     }
-    req[source] = result.data;
+    if (source === "query") {
+      Object.assign(req.query, result.data);
+    } else {
+      req[source] = result.data;
+    }
     next();
   };

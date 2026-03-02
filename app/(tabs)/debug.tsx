@@ -109,7 +109,7 @@ export default function DebugScreen() {
             </Text>
           )}
           {accountsQuery.isSuccess && (
-            <Row label="count" value={String(accountsQuery.data?.length ?? 0)} highlight />
+            <Row label="count" value={String(accountsQuery.data?.data?.length ?? 0)} highlight />
           )}
         </View>
 
