@@ -1,13 +1,19 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AddExpenseModal, AddExpenseModalRef } from '@/features/add-expense';
 import { CustomTabBar } from '@/features/shared';
+import { useAccounts } from '@/hooks/queries';
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const modalRef = useRef<AddExpenseModalRef>(null);
+  const { data: accounts, isSuccess, isFetching } = useAccounts();
+
+  if (isSuccess && !isFetching && accounts.data.length === 0) {
+    return <Redirect href="/onboarding" />;
+  }
 
   const handleAddPress = () => {
     modalRef.current?.open();
@@ -38,6 +44,10 @@ export default function TabLayout() {
         <Tabs.Screen
           name="settings"
           options={{ title: t('navigation.settings') }}
+        />
+        <Tabs.Screen
+          name="debug"
+          options={{ title: 'DEBUG', href: __DEV__ ? undefined : null }}
         />
       </Tabs>
 

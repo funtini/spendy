@@ -79,6 +79,7 @@ function AppContent() {
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="transactions" options={{ headerShown: false }} />
               <Stack.Screen name="profile" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
             </Stack>
             {!isSignedIn && <Redirect href="/(auth)/sign-in" />}
             <StatusBar style={isDark ? 'light' : 'dark'} />

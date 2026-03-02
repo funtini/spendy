@@ -17,6 +17,7 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   statistics: 'bar-chart',
   wallet: 'wallet',
   settings: 'settings-sharp',
+  debug: 'bug',
 };
 
 const TAB_ICONS_OUTLINE: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -24,6 +25,7 @@ const TAB_ICONS_OUTLINE: Record<string, keyof typeof Ionicons.glyphMap> = {
   statistics: 'bar-chart-outline',
   wallet: 'wallet-outline',
   settings: 'settings-outline',
+  debug: 'bug-outline',
 };
 
 export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation, onAddPress }) => {
